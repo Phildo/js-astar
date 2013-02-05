@@ -1,18 +1,54 @@
-var Node = function()
+var MAX_SCORE = 999999999;
+var Node = function(id)
 {
-  var toNeighbors = [];
+  var availableNeighbors = new RegistrationList("NODE_"+id+"_AVAILABLE_NEIGHBORS");
+  var closedNeighbors = new RegistrationList("NODE_"+id+"_CLOSED_NEIGHBORS");
+  var approachingNeighbors = new RegistrationList("NODE_"+id+"_APPROACHING_NEIGHBORS");
 
+  this.informNeighborsOfClosing()
+  {
+    availableNeighbors.performMemberFunction("informOfClosing", this);
+  };
+  this.beInformedOfClosing(node)
+  {
+    availableNeighbors.moveMemberToList(node, closedNeighbors);
+  };
+  var nodeAndOpenNodes = {"node":this,"openNodes":null}; //the whole 'nodeAndOpenNodes' object is a repurcussion of using a "registrationlist" when I really should just be using a normal linked list with an iterator
+  this.tryToAddNeighborsToPath(openNodes)
+  {
+    nodeAndOpenNodes.openNodes = openNodes;
+    availableNeighbors.performMemberFunction("tryToBeAddedToPath", nodeAndOpenNodes);
+  };
+  this.tryToBeAddedToPath(nodeAndOpenNodesObj)
+  {
+    if((var s = this.h + this.calculateGFrom(nodeAndOpenNodesObj.node)) < score)
+    {
+      this.parent = nodeAndOpenNodesObj.node;
+      if(this.score != MAX_SCORE)
+        nodeAndOpenNodesObj.openNodes.remove(this);
+      this.score = s;
+      nodeAndOpenNodesObj.openNodes.add(this);
+    }
+  };
+
+  this.beConnectedFrom = function(node)
+  {
+    approachingNeighbors.register(node);
+  };
   this.connectTo = function(node)
   {
-    toNeighbors[toNeighbors.length] = node;
+    availableNeighbors.register(node);
+    node.beConnectedFrom(this);
+  };
+  this.beDisconnectedFrom = function(node)
+  {
+    approachingNeighbors.unregister(node);
   };
   this.disconnectTo = function(node)
   {
-    for(var i = 0; i < toNeighbors.length; i++)
-    {
-      if(toNeighbors[i] == node)
-        toNeighbors.splice(i,1);
-    }
+    availableNeighbors.unregister(node);
+    closedNeighbors.unregister(node);
+    node.beDisconnectedFrom(this);
   };
 
   this.h = 0;
@@ -22,12 +58,15 @@ var Node = function()
 
   this.reset = function()
   {
-    this.score = 9999999999;
+    this.score = MAX_SCORE;
     this.parent = null;
     this.opened = false;
     this.closed = false;
     this.isStart = false;
     this.isEnd = false;
+    var m;
+    while(m = closedNeighbors.firstMember())
+      closedNeighbors.moveMemberToList(m, availableNeighbors);
   };
   this.reset();
 };
@@ -77,12 +116,23 @@ var Map = function(id)
 
 var aStarTraverse = function(map, startNode, endNode)
 {
-  
   startNode.isStart = true;
   endNode.isEnd = true;
 
+  var openNodes = new BinaryTree("OPEN_NODES");
+  startNode.score = 0;
+  openNodes.add(startNode);
+  closeNode(startNode);
+
+  var n;
+  while(n = openNodes.popLeastMember())
+    closeNode(n);
+
   var closeNode = function(node)
   {
-
+    node.informNeighborsOfClosing();
+    node.closed = true;
+    node.tryToAddNeighborsToPath(openNodes);
+    openNodes.remove(node);
   };
 };
