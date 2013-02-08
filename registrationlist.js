@@ -8,7 +8,8 @@ var RegistrationList = function(identifier)
   iterator.node = self.head;
   iterator.next = function()
   {
-    return node.next.content;
+    this.node = this.node.next;
+    return this.node.content;
   };
   self.getIterator = function()
   {

@@ -48,6 +48,8 @@ var BinaryTree = function(identifier)
 
   var insertNode = function(node)
   {
+    node.content.BNodeMap[self.identifier] = node;
+
     if(!self.head) //I hate doing things like this...
     {
       self.head = node;
@@ -84,8 +86,6 @@ var BinaryTree = function(identifier)
       parentNode.left = node;
     if(parentNode && !lastCheckWasLeft)
         parentNode.right = node;
-
-    node.content.BNodeMap[self.identifier] = node;
   };
 
   var moveContentToNode = function(fromNode, toNode) //overwrites toNode's content

@@ -13,12 +13,14 @@ function doit()
 
 
   var map = new Map("Test");
-  var nodes = map.constructGrid(10,10);
-  var randomstartx = Math.floor(Math.random()*10);
-  var randomstarty = Math.floor(Math.random()*10);
-  var randomendx = Math.floor(Math.random()*10);
-  var randomendy = Math.floor(Math.random()*10);
-  var astar = new aStarTraverse(map, nodes[randomstartx][randomstarty], nodes[randomendx][randomendy]);
+  var randomstartx = Math.floor(Math.random()*20);
+  var randomstarty = Math.floor(Math.random()*20);
+  var randomendx = Math.floor(Math.random()*20);
+  var randomendy = Math.floor(Math.random()*20);
+  var end = {"x":randomendx,"y":randomendy};
+  var nodes = map.constructGrid(20,20, end, c.context);
+  console.log("From ("+randomstartx+","+randomstarty+") to ("+randomendx+","+randomendy+")");
+  var astar = new aStarTraverse(map, nodes[randomstartx][randomstarty], nodes[randomendx][randomendy], c.context);
 }
 
 window.addEventListener('load',doit,false);

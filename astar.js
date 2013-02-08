@@ -11,7 +11,7 @@ var Node = function(id)
   this.informNeighborsOfClosing = function()
   {
     var i = availableToNeighbors.getIterator();
-    while(n = i.getNext())
+    while(n = i.next())
       n.learnOfClosingNode(this);
   };
   this.learnOfClosingNode = function(node)
@@ -23,20 +23,31 @@ var Node = function(id)
   {
     var i = availableToNeighbors.getIterator();
     var n;
-    while(n = i.getNext())
+    var max = 100;
+    while(n = i.next())
+    {
+      alert();
       n.tryToBeAddedToPath(this, openNodes);
+    }
   };
   this.tryToBeAddedToPath = function(node, openNodes)
   {
     var s;
-    if((s = this.h + this.calculateGFrom(node)) < score)
+    var g = this.calculateGFrom(node);
+    if((s = this.h + g) < this.score)
     {
       this.parent = node;
       if(this.score != MAX_SCORE)
         openNodes.remove(this);
       this.score = s;
-      console.log("tried adding:"+this.id+" score:"+this.score);
+      this.g = g;
       openNodes.add(this);
+      
+      //BS
+      //this.draw();
+      //END BS
+      
+      //console.log("  adding node "+this.id+" score:"+this.score);
     }
   };
 
@@ -62,9 +73,9 @@ var Node = function(id)
   
   this.h = 0;
   this.g = 0;
-  this.calculateH = function() { this.h = 0; }; //overwrite me
+  this.calculateH = function() { this.h = 100*(Math.abs(this.x-this.end.x) + Math.abs(this.y-this.end.y)); console.log(this.h); }; //overwrite me
   this.calculateGTo = function(node) { return node.calculateGFrom(this); };
-  this.calculateGFrom = function(node) { return node.g+0; }; //overwrite me
+  this.calculateGFrom = function(node) { return node.g+1; }; //overwrite me
   this.evaluate = function() { return this.score; };
 
   this.reset = function()
@@ -84,9 +95,8 @@ var Map = function(id)
 {
   var nodes = new RegistrationList("MAP_"+id);
 
-  this.constructGrid = function(width, height)
+  this.constructGrid = function(width, height, end, stage)
   {
-    console.log("constructing grid:"+width+"x"+height);
     nodes.empty();
     var pos = [];
     var tmpNode;
@@ -96,7 +106,26 @@ var Map = function(id)
       for(var j = 0; j < height; j++)
       {
         tmpNode = new Node(i+"_"+j);
+        
+        // THIS IS BS
+        tmpNode.x = i;
+        tmpNode.y = j;
+        tmpNode.stage = stage;
+        tmpNode.draw = function()
+        {
+          this.stage.fillStyle = "#"+Math.floor(this.score/20)+""+Math.floor(this.score/20)+""+Math.floor(this.score/20);
+          this.stage.fillRect(this.x*20+2, this.y*20+2, 16, 16);
+        }
+        tmpNode.drawC = function()
+        {
+          this.stage.fillStyle = "#0"+Math.floor(this.score/20)+"F"+Math.floor(this.score/20)+"0"+Math.floor(this.score/20);
+          this.stage.fillRect(this.x*20+2, this.y*20+2, 16, 16);
+        }
+        // END BS
+
         pos[i][j] = tmpNode;
+        tmpNode.end = end;
+        tmpNode.calculateH();
         nodes.register(tmpNode);
       }
     }
@@ -104,7 +133,6 @@ var Map = function(id)
     {
       for(var j = 0; j < height; j++)
       {
-        console.log("connecting:"+i+","+j);
         if(i-1 >= 0)
           pos[i][j].connectTo(pos[i-1][j]);
         if(i+1 < width)
@@ -118,24 +146,29 @@ var Map = function(id)
     return pos;
   };
   
-  var resetNodes = function()
+  this.resetNodes = function()
   {
-    nodes.performMemberFunction(reset);
+    nodes.performMemberFunction("reset", null);
   };
 };
 
-var aStarTraverse = function(map, startNode, endNode)
+var aStarTraverse = function(map, startNode, endNode, stage)
 {
+  alert(startNode.id + " " + endNode.id);
+  map.resetNodes();
   startNode.isStart = true;
   endNode.isEnd = true;
+  
+  stage.fillStyle = "#FF0000";
+  stage.fillRect(endNode.x*20+2, endNode.y*20+2, 16, 16);
 
   var closeNode = function(node)
   {
-    console.log("closing node:"+node.id);
+    console.log("closing node "+node.id);
     node.informNeighborsOfClosing();
     node.closed = true;
     node.tryToAddNeighborsToPath(openNodes);
-    openNodes.remove(node);
+    node.drawC();
   };
 
   var openNodes = new BinaryTree("OPEN_NODES");
