@@ -1,14 +1,31 @@
 <html>
 <head>
 <script type='text/javascript' src='registrationlist.js'></script>
+<script type='text/javascript' src='binarytree.js'></script>
 <script type='text/javascript' src='canv.js'></script>
 <script type='text/javascript' src='astar.js'></script>
 <script type='text/javascript'>
+function doit()
+{
   var c = new Canv(500,500);
   c.canvas.style.border = "1px solid black";
   document.getElementById("thebody").appendChild(c.canvas);
+
+
+  var map = new Map("Test");
+  var nodes = map.constructGrid(10,10);
+  var randomstartx = Math.floor(Math.random()*10);
+  var randomstarty = Math.floor(Math.random()*10);
+  var randomendx = Math.floor(Math.random()*10);
+  var randomendy = Math.floor(Math.random()*10);
+  var astar = new aStarTraverse(map, nodes[randomstartx][randomstarty], nodes[randomendx][randomendy]);
+}
+
+window.addEventListener('load',doit,false);
 </script>
 </head>
-<body id="thebody">
+<body >
+  <div id="thebody">
+  </div>
 </body>
 </html>
