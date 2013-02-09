@@ -1,0 +1,211 @@
+<html>
+<head>
+<script type='text/javascript' src='linkedlist.js'></script>
+<script type='text/javascript' src='binarytree.js'></script>
+<script type='text/javascript' src='canv.js'></script>
+<script type='text/javascript' src='astar.js'></script>
+<script type='text/javascript'>
+var c = new Canv(500,500);
+c.canvas.style.border = "1px solid black";
+
+var started = false;
+
+var map;
+var n = 30;
+
+var rx, ry;
+
+var nodes;
+var youa;
+var youb;
+var youc;
+var youd;
+var end;
+var stepa;
+var stepb;
+var stepc;
+var stepd;
+
+var blockQueue = new LinkedList("CLICK_QUEUE");
+var unblockQueue = new LinkedList("CLICK_QUEUE");
+var shiftDown = false;
+var pt;
+
+function doit()
+{
+  document.getElementById("canvas_container").appendChild(c.canvas);
+
+  AStarNode.prototype.calculateH = function(node) 
+  { 
+    this.h = 50*(Math.abs(node.content.x-this.content.x)+Math.abs(node.content.y-this.content.y)); 
+  };
+  AStarNode.prototype.calculateGFrom = function(node)
+  {
+    return node.g+node.content.height-this.content.height;
+  };
+
+  map = new Map("Test");
+  nodes = map.constructGrid(n,n);
+  youa = nodes[0][0];
+  youb = nodes[0][n-1];
+  youc = nodes[n-1][0];
+  youd = nodes[n-1][n-1];
+  end = nodes[0][0];
+  
+  tick();
+}
+
+function tick()
+{
+  dequeueBlocks();
+  dequeueUnblocks();
+  if(started)
+  {
+    while(youa == end || youb == end || youc == end || youd == end) setRandomEnd();
+    stepa = map.getBestStep(youa,end);
+    stepb = map.getBestStep(youb,end);
+    stepc = map.getBestStep(youc,end);
+    stepd = map.getBestStep(youd,end);
+    if(stepa) youa = stepa;
+    if(stepb) youb = stepb;
+    if(stepc) youc = stepc;
+    if(stepd) youd = stepd;
+  }
+  draw();
+  setTimeout(tick, 10);
+}
+
+function draw()
+{
+  for(var i = 0; i < n; i++)
+  {
+    for(var j = 0; j < n; j++)
+    {
+      if(nodes[i][j] == end) c.context.fillStyle = "#FF0000";
+      else if(nodes[i][j] == youa) c.context.fillStyle = "#00FF00";
+      else if(nodes[i][j] == youb) c.context.fillStyle = "#00FFFF";
+      else if(nodes[i][j] == youc) c.context.fillStyle = "#FFFF00";
+      else if(nodes[i][j] == youd) c.context.fillStyle = "#FF00FF";
+      else if(nodes[i][j].content.block) c.context.fillStyle = "#555555";
+      else c.context.fillStyle = "#000000"; //{ var h = Math.floor(nodes[i][j].height/10); c.context.fillStyle == "#"+h+""+h+""+h; }
+      c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
+    }
+  }
+};
+
+function setRandomEnd()
+{
+  rx = Math.floor(Math.random()*n);
+  ry = Math.floor(Math.random()*n);
+  while(nodes[rx][ry].content.block == true)
+  {
+    rx = Math.floor(Math.random()*n);
+    ry = Math.floor(Math.random()*n);
+  }
+
+  end = nodes[rx][ry];
+};
+
+// WALL INPUT HANDLING
+
+function addToBlockQueue(e)
+{
+  blockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+};
+
+function addToUnblockQueue(e)
+{
+  unblockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+};
+
+function startBlocking(e)
+{
+  if(!shiftDown)
+  {
+    window.addEventListener('mousemove', addToBlockQueue, false);
+    addToBlockQueue(e);
+  }
+  else if(shiftDown)
+  {
+    window.addEventListener('mousemove', addToUnblockQueue, false);
+    addToUnblockQueue(e);
+    e.stopPropagation();
+  }
+};
+
+function stopBlocking(e)
+{
+  if(!shiftDown)
+    window.removeEventListener('mousemove', addToBlockQueue, false);
+  else if(shiftDown)
+  {
+    window.removeEventListener('mousemove', addToUnblockQueue, false);
+    e.stopPropagation();
+  }
+};
+
+function dequeueBlocks()
+{
+  while(pt = blockQueue.firstMember())
+  {
+    var x = Math.floor((pt.x/c.canvas.width)*n);
+    var y = Math.floor((pt.y/c.canvas.width)*n);
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != youa && 
+       nodes[x][y] != youb && 
+       nodes[x][y] != youc && 
+       nodes[x][y] != youd && 
+       nodes[x][y] != end &&
+       !nodes[x][y].content.block)
+    {
+          nodes[x][y].disallowPassage();
+          nodes[x][y].content.block = true;;
+    }
+    blockQueue.remove(pt);
+  }
+}
+
+function dequeueUnblocks()
+{
+  while(pt = unblockQueue.firstMember())
+  {
+    var x = Math.floor((pt.x/c.canvas.width)*n);
+    var y = Math.floor((pt.y/c.canvas.width)*n);
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != youa && 
+       nodes[x][y] != youb && 
+       nodes[x][y] != youc && 
+       nodes[x][y] != youd && 
+       nodes[x][y] != end &&
+       nodes[x][y].content.block)
+    {
+          nodes[x][y].allowPassage();
+          nodes[x][y].content.block = false;;
+    }
+    blockQueue.remove(pt);
+  }
+}
+  
+function downShift(e)
+{
+  if(e.keyCode == 16) shiftDown = true;
+};
+function upShift(e)
+{
+  if(e.keyCode == 16) shiftDown = false;
+};
+
+document.addEventListener('mousedown', startBlocking, false);
+document.addEventListener('mouseup', stopBlocking, false);
+document.addEventListener('keydown', downShift, false);
+document.addEventListener('keyup', upShift, false);
+
+window.addEventListener('load',doit,false);
+</script>
+</head>
+<body >
+  <div id="canvas_container">
+  </div>
+  <div onClick="javascript:started = true;">START</div>
+</body>
+</html>
