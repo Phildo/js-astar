@@ -19,6 +19,16 @@ var AStarNode = function(id)
   {
     availableToNeighbors.moveMemberToList(node, closedToNeighbors);
   };
+  this.allowPassage = function()
+  {
+    var i = availableToNeighbors.getIterator();
+    var n;
+    var ns = [];
+    while(n = i.next())
+      ns[ns.length] = n;
+    for(var k = 0; k < ns.length; k++)
+      ns[k].connectTo(this);
+  };
   this.disallowPassage = function()
   {
     var i = fromNeighbors.getIterator();

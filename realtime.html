@@ -19,6 +19,8 @@ var end;
 var step;
 
 var blockQueue = new RegistrationList("CLICK_QUEUE");
+var unblockQueue = new RegistrationList("CLICK_QUEUE");
+var shiftDown = false;
 var pt;
 
 function doit()
@@ -44,23 +46,32 @@ function doit()
 
 function tick()
 {
-  if(pt = blockQueue.firstMember())
+  while(pt = blockQueue.firstMember())
   {
     var x = Math.floor((pt.x/c.canvas.width)*n);
     var y = Math.floor((pt.y/c.canvas.width)*n);
-    if(x >= 0 && x < n && y >= 0 && y < n) 
-    { 
-      if(nodes[x][y] != you && nodes[x][y] != end)
-      {
-        if(!nodes[x][y].content.block)
-        {
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != you && nodes[x][y] != end &&
+       !nodes[x][y].content.block)
+    {
           nodes[x][y].disallowPassage();
           nodes[x][y].content.block = true;;
-        }
-      }
     }
     blockQueue.unregister(pt);
-  };
+  }
+  while(pt = unblockQueue.firstMember())
+  {
+    var x = Math.floor((pt.x/c.canvas.width)*n);
+    var y = Math.floor((pt.y/c.canvas.width)*n);
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != you && nodes[x][y] != end &&
+       nodes[x][y].content.block)
+    {
+          nodes[x][y].allowPassage();
+          nodes[x][y].content.block = false;;
+    }
+    blockQueue.unregister(pt);
+  }
   
   while(you == end) setRandomEnd();
   step = map.getBestStep(you,end);
@@ -102,20 +113,51 @@ function addToBlockQueue(e)
   blockQueue.register({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
 };
 
+function addToUnblockQueue(e)
+{
+  unblockQueue.register({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+};
+
 function startBlocking(e)
 {
-  window.addEventListener('mousemove', addToBlockQueue, false);
-  addToBlockQueue(e);
+  if(!shiftDown)
+  {
+    window.addEventListener('mousemove', addToBlockQueue, false);
+    addToBlockQueue(e);
+  }
+  else if(shiftDown)
+  {
+    window.addEventListener('mousemove', addToUnblockQueue, false);
+    addToUnblockQueue(e);
+    e.stopPropagation();
+  }
 };
 
 function stopBlocking(e)
 {
-  window.removeEventListener('mousemove', addToBlockQueue, false);
+  if(!shiftDown)
+    window.removeEventListener('mousemove', addToBlockQueue, false);
+  else if(shiftDown)
+  {
+    window.removeEventListener('mousemove', addToUnblockQueue, false);
+    e.stopPropagation();
+  }
+};
+
+function downShift(e)
+{
+  if(e.keyCode == 16) shiftDown = true;
+};
+function upShift(e)
+{
+  if(e.keyCode == 16) shiftDown = false;
 };
 
 window.addEventListener('load',doit,false);
 document.addEventListener('mousedown', startBlocking, false);
 document.addEventListener('mouseup', stopBlocking, false);
+document.addEventListener('keydown', downShift, false);
+document.addEventListener('keyup', upShift, false);
 </script>
 </head>
 <body >
