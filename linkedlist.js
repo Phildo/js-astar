@@ -1,32 +1,18 @@
-var RegistrationList = function(identifier)
+var LinkedList = function(identifier)
 {
   var self = this;
   this.identifier = identifier;
 
-  //Be careful with this iterator... (I've gotta clean up this code a bit...)
-  var iterator = {};
-  iterator.node = self.head;
-  iterator.next = function()
-  {
-    this.node = this.node.next;
-    return this.node.content;
-  };
-  self.getIterator = function()
-  {
-    iterator.node = self.head;
-    return iterator;
-  };
-
-  var RNode = function(content)
+  var LLNode = function(content)
   {
     var node = this;
     node.prev = null;
     node.next = null;
     node.content = content;
 
-    if(node.content !== null && typeof node.content.RNodeMap === 'undefined')
+    if(node.content !== null && typeof node.content.LLNodeMap === 'undefined')
     {
-      Object.defineProperty(node.content, "RNodeMap", {
+      Object.defineProperty(node.content, "LLNodeMap", {
         enumerable:false,
         configurable:true,
         writable:true,
@@ -35,8 +21,8 @@ var RegistrationList = function(identifier)
     }
   };
 
-  this.head = new RNode(null);
-  this.tail = new RNode(null);
+  this.head = new LLNode(null);
+  this.tail = new LLNode(null);
   this.head.next = this.tail;
   this.tail.prev = this.head;
 
@@ -50,7 +36,7 @@ var RegistrationList = function(identifier)
 
     if(node.content !== null)
     {
-      node.content.RNodeMap[self.identifier] = node;
+      node.content.LLNodeMap[self.identifier] = node;
     }
 
     return node;
@@ -66,25 +52,25 @@ var RegistrationList = function(identifier)
 
     if(node.content !== null)
     {
-      delete node.content.RNodeMap[self.identifier];
+      delete node.content.LLNodeMap[self.identifier];
     }
 
     return node;
   };
 
-  self.register = function(content)
+  self.add = function(content)
   {
-    self.insertNodeAfter(new RNode(content), self.head);
+    self.insertNodeAfter(new LLNode(content), self.head);
   };
 
-  self.unregister = function(content)
+  self.remove = function(content)
   {
-    self.removeNode(content.RNodeMap[self.identifier]);
+    self.removeNode(content.LLNodeMap[self.identifier]);
   };
 
   self.moveMemberToList = function(content, list)
   {
-    list.insertNodeAfter(self.removeNode(content.RNodeMap[self.identifier]), list.head);
+    list.insertNodeAfter(self.removeNode(content.LLNodeMap[self.identifier]), list.head);
   };
 
   self.performMemberFunction = function(func, args)
@@ -116,18 +102,31 @@ var RegistrationList = function(identifier)
 
   self.hasMember = function(content)
   {
-    return content.RNodeMap[self.identifier];
+    return content.LLNodeMap[self.identifier];
   };
 
   self.empty = function()
   {
     var m;
     while(m = self.firstMember())
-      self.unregister(m);
+      self.remove(m);
+  };
+  
+  var Iterator = function(){};
+  Iterator.prototype.next = function()
+  {
+    this.node = this.node.next;
+    return this.node.content;
+  };
+  self.getIterator = function()
+  {
+    var i = new Iterator();
+    i.node = self.head;
+    return i;
   };
 };
 
-RegistrationList.prototype.toString = function()
+LinkedList.prototype.toString = function()
 {
   var str = "";
   var node = this.head;
@@ -141,22 +140,22 @@ RegistrationList.prototype.toString = function()
   return str;
 };
 
-var PrioritizedRegistrationList = function(identifier, priorities)
+var PrioritizedLinkedList = function(identifier, priorities)
 {
   var self = this;
   this.identifier = identifier;
   this.priorities = [];
   for(var i = 0; i < priorities; i++)
-    this.priorities[i] = new RegistrationList(identifier+"_PRIORITY_"+i);
+    this.priorities[i] = new LinkedList(identifier+"_PRIORITY_"+i);
 
-  self.register = function(content, priority)
+  self.add = function(content, priority)
   {
-    this.priorities[priority].register(content);
+    this.priorities[priority].add(content);
   };
 
-  self.unregister = function(content, priority)
+  self.remove = function(content, priority)
   {
-    this.priorities[priority].unregister(content);
+    this.priorities[priority].remove(content);
   };
 
   self.moveMemberToList = function(content, priority, list)
@@ -166,8 +165,8 @@ var PrioritizedRegistrationList = function(identifier, priorities)
 
   self.moveMemberToPrioritizedList = function(content, priority, list, priority)
   {
-    this.priorities[priority].unregister(content);
-    list.register(content, priority);
+    this.priorities[priority].remove(content);
+    list.add(content, priority);
     //That's the fastest way I can think to do this one, unfortunately... :(
   };
 
@@ -185,7 +184,12 @@ var PrioritizedRegistrationList = function(identifier, priorities)
 
   self.firstMember = function(priority)
   {
-    return this.priorities[i].firstMember();
+    return this.priorities[priority].firstMember();
+  };
+
+  self.hasMember = function(content, priority)
+  {
+    return this.priorities[priority].hasMember(content);
   };
 
   self.empty = function()
@@ -193,9 +197,34 @@ var PrioritizedRegistrationList = function(identifier, priorities)
     for(var i = 0; i < this.priorities.length; i++)
       this.priorities[i].empty();
   };
+  
+  var PIterator = function(){};
+  PIterator.prototype.next = function()
+  {
+    var n;
+    while(n = this.i.next())
+    {
+      if(n.content) return n.content;
+      
+      if(this.priority < this.priorities.length)
+      {
+        this.priority++;
+        this.i = this.priorities[this.priority].getIterator();
+      }
+      else
+        return null;
+    }
+  };
+  self.getIterator = function()
+  {
+    var i = new PIterator();
+    i.priority = 0;
+    i.i = this.priorities[0].getIterator();
+    return i;
+  };
 };
 
-PrioritizedRegistrationList.prototype.toString = function()
+PrioritizedLinkedList.prototype.toString = function()
 {
   var str = "";
   for(var i = 0; i < this.priorities.length; i++)
@@ -203,12 +232,12 @@ PrioritizedRegistrationList.prototype.toString = function()
   return str;
 };
 
-var RecycleRegistrationList = function(identifier, generateFunc, refreshFunc)
+var RecycleLinkedList = function(identifier, generateFunc, refreshFunc)
 {
   var self = this;
   this.identifier = identifier;
-  var active = new RegistrationList("RECYCLE_"+identifier+"_ACTIVE");
-  var inactive = new RegistrationList("RECYCLE_"+identifier+"_INACTIVE");
+  var active = new LinkedList("RECYCLE_"+identifier+"_ACTIVE");
+  var inactive = new LinkedList("RECYCLE_"+identifier+"_INACTIVE");
 
   self.generate = generateFunc;
   self.refresh = refreshFunc;
@@ -217,7 +246,7 @@ var RecycleRegistrationList = function(identifier, generateFunc, refreshFunc)
   {
     var m;
     if(m = inactive.firstMember())
-      inactive.unregister(m);
+      inactive.remove(m);
     else
       m = self.generate();
     self.refresh(m);
@@ -226,7 +255,7 @@ var RecycleRegistrationList = function(identifier, generateFunc, refreshFunc)
 
   self.add = function(m)
   {
-    active.register(m);
+    active.add(m);
   };
 
   self.retire = function(m)
@@ -248,11 +277,21 @@ var RecycleRegistrationList = function(identifier, generateFunc, refreshFunc)
   {
     return active.firstMember();
   };
+  
+  self.hasMember = function(content)
+  {
+    return active.hasMember(content);
+  };
 
   self.empty = function()
   {
     var m;
     while(m = self.firstMember())
       self.retire(m);
+  };
+
+  self.getIterator = function()
+  {
+    return active.getIterator();
   };
 };

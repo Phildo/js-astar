@@ -4,9 +4,9 @@ var AStarNode = function(id)
   this.id = id;
   //"To" = away from self (from this node TO another node)
   //"From" = toward self (FROM another node to this node)
-  var availableToNeighbors = new RegistrationList("NODE_"+id+"_AVAILABLE_TO_NEIGHBORS");
-  var closedToNeighbors = new RegistrationList("NODE_"+id+"_CLOSED_TO_NEIGHBORS");
-  var fromNeighbors = new RegistrationList("NODE_"+id+"_FROM_NEIGHBORS"); //neighbors from which this node is accessible
+  var availableToNeighbors = new LinkedList("NODE_"+id+"_AVAILABLE_TO_NEIGHBORS");
+  var closedToNeighbors = new LinkedList("NODE_"+id+"_CLOSED_TO_NEIGHBORS");
+  var fromNeighbors = new LinkedList("NODE_"+id+"_FROM_NEIGHBORS"); //neighbors from which this node is accessible
 
   this.informNeighborsOfClosing = function()
   {
@@ -48,27 +48,27 @@ var AStarNode = function(id)
   };
   this.getPath = function(list)
   {
-    list.register(this);
+    list.add(this);
     if(this.parent) return this.parent.getPath(list);
     else return list;
   };
 
   this.beConnectedFrom = function(node)
   {
-    fromNeighbors.register(node);
+    fromNeighbors.add(node);
   };
   this.connectTo = function(node)
   {
-    availableToNeighbors.register(node);
+    availableToNeighbors.add(node);
     node.beConnectedFrom(this);
   };
   this.beDisconnectedFrom = function(node)
   {
-    fromNeighbors.unregister(node);
+    fromNeighbors.remove(node);
   };
   this.disconnectTo = function(node)
   {
-    availableToNeighbors.unregister(node);
+    availableToNeighbors.remove(node);
     node.beDisconnectedFrom(this);
   };
   
@@ -94,7 +94,7 @@ AStarNode.prototype.evaluate = function() { return this.score; };
 
 var Map = function(id)
 {
-  var nodes = new RegistrationList("MAP_"+id);
+  var nodes = new LinkedList("MAP_"+id);
 
   this.constructGrid = function(width, height)
   {
@@ -109,7 +109,7 @@ var Map = function(id)
         tmpNode = new AStarNode(i+"_"+j);
         tmpNode.content = {"x":i,"y":j,"height":0,"block":false};
         pos[i][j] = tmpNode;
-        nodes.register(tmpNode);
+        nodes.add(tmpNode);
       }
     }
     for(var i = 0; i < width; i++)
@@ -145,7 +145,7 @@ var Map = function(id)
     startNode.isStart = true;
     endNode.isEnd = true;
     this.calculateHs(endNode);
-    var bestPath = new RegistrationList("BEST_PATH_"+startNode.id+"_"+endNode.id);
+    var bestPath = new LinkedList("BEST_PATH_"+startNode.id+"_"+endNode.id);
   
     var closeNode = function(node)
     {

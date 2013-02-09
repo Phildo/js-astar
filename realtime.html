@@ -1,6 +1,6 @@
 <html>
 <head>
-<script type='text/javascript' src='registrationlist.js'></script>
+<script type='text/javascript' src='linkedlist.js'></script>
 <script type='text/javascript' src='binarytree.js'></script>
 <script type='text/javascript' src='canv.js'></script>
 <script type='text/javascript' src='astar.js'></script>
@@ -18,8 +18,8 @@ var you;
 var end;
 var step;
 
-var blockQueue = new RegistrationList("CLICK_QUEUE");
-var unblockQueue = new RegistrationList("CLICK_QUEUE");
+var blockQueue = new LinkedList("CLICK_QUEUE");
+var unblockQueue = new LinkedList("CLICK_QUEUE");
 var shiftDown = false;
 var pt;
 
@@ -87,12 +87,12 @@ function setRandomEnd()
 
 function addToBlockQueue(e)
 {
-  blockQueue.register({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+  blockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
 };
 
 function addToUnblockQueue(e)
 {
-  unblockQueue.register({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+  unblockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
 };
 
 function startBlocking(e)
@@ -134,7 +134,7 @@ function dequeueBlocks()
           nodes[x][y].disallowPassage();
           nodes[x][y].content.block = true;;
     }
-    blockQueue.unregister(pt);
+    blockQueue.remove(pt);
   }
 }
 
@@ -151,7 +151,7 @@ function dequeueUnblocks()
           nodes[x][y].allowPassage();
           nodes[x][y].content.block = false;;
     }
-    blockQueue.unregister(pt);
+    blockQueue.remove(pt);
   }
 }
   
