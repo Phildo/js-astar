@@ -5,29 +5,58 @@
 <script type='text/javascript' src='canv.js'></script>
 <script type='text/javascript' src='astar.js'></script>
 <script type='text/javascript'>
+//var c = new Canv(500,500);
+//c.canvas.style.border = "1px solid black";
+//document.getElementById("canvas_container").appendChild(c.canvas);
+
+var map;
+var n = 100;
+
+var rsx, rsy, rex, rey;
+
+var nodes;
+var path;
+var it;
+var tmpnode;
+
 function doit()
 {
-  var c = new Canv(500,500);
-  c.canvas.style.border = "1px solid black";
-  document.getElementById("thebody").appendChild(c.canvas);
+  AStarNode.prototype.calculateH = function(node) 
+  { 
+    this.h = 100*(Math.abs(node.content.x-this.content.x)+Math.abs(node.content.y-this.content.y)); 
+  };
 
+  map = new Map("Test");
+  nodes = map.constructGrid(n,n);
+}
 
-  var map = new Map("Test");
-  var randomstartx = Math.floor(Math.random()*20);
-  var randomstarty = Math.floor(Math.random()*20);
-  var randomendx = Math.floor(Math.random()*20);
-  var randomendy = Math.floor(Math.random()*20);
-  var end = {"x":randomendx,"y":randomendy};
-  var nodes = map.constructGrid(20,20, end, c.context);
-  console.log("From ("+randomstartx+","+randomstarty+") to ("+randomendx+","+randomendy+")");
-  var astar = new aStarTraverse(map, nodes[randomstartx][randomstarty], nodes[randomendx][randomendy], c.context);
+function getRandomPath()
+{
+  rsx = Math.floor(Math.random()*n);
+  rsy = Math.floor(Math.random()*n);
+  rex = Math.floor(Math.random()*n);
+  rey = Math.floor(Math.random()*n);
+
+  console.log(rsx+" "+rsy+" "+rex+" "+rex);
+  path = map.getBestPath(nodes[rsx][rsy],nodes[rex][rey]);
+  it = path.getIterator();
+  var str = "("+rsx+","+rsy+")->("+rex+","+rey+"):";
+  while(tmpnode = it.next())
+    str+="("+tmpnode.content.x+","+tmpnode.content.y+")";
+  document.getElementById("results").innerHTML+=str+"<br />\n";
+  path.empty();
 }
 
 window.addEventListener('load',doit,false);
 </script>
 </head>
 <body >
-  <div id="thebody">
+  <div id="canvas_container">
+  </div>
+  <div id="getRandom" onclick="getRandomPath();">
+  Get Random Path
+  </div>
+  <div id="results">
   </div>
 </body>
 </html>

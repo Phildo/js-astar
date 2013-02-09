@@ -1,9 +1,9 @@
 var MAX_SCORE = 999999999;
-var Node = function(id)
+var AStarNode = function(id)
 {
   this.id = id;
-  //"To" = away (from this node TO another node)
-  //"From" = toward (FROM another node to this node)
+  //"To" = away from self (from this node TO another node)
+  //"From" = toward self (FROM another node to this node)
   var availableToNeighbors = new RegistrationList("NODE_"+id+"_AVAILABLE_TO_NEIGHBORS");
   var closedToNeighbors = new RegistrationList("NODE_"+id+"_CLOSED_TO_NEIGHBORS");
   var fromNeighbors = new RegistrationList("NODE_"+id+"_FROM_NEIGHBORS"); //neighbors from which this node is accessible
@@ -11,6 +11,7 @@ var Node = function(id)
   this.informNeighborsOfClosing = function()
   {
     var i = availableToNeighbors.getIterator();
+    var n;
     while(n = i.next())
       n.learnOfClosingNode(this);
   };
@@ -25,10 +26,7 @@ var Node = function(id)
     var n;
     var max = 100;
     while(n = i.next())
-    {
-      alert();
       n.tryToBeAddedToPath(this, openNodes);
-    }
   };
   this.tryToBeAddedToPath = function(node, openNodes)
   {
@@ -42,13 +40,13 @@ var Node = function(id)
       this.score = s;
       this.g = g;
       openNodes.add(this);
-      
-      //BS
-      //this.draw();
-      //END BS
-      
-      //console.log("  adding node "+this.id+" score:"+this.score);
     }
+  };
+  this.getPath = function(list)
+  {
+    list.register(this);
+    if(!this.isStart) return this.parent.getPath(list);
+    else return list;
   };
 
   this.beConnectedFrom = function(node)
@@ -73,10 +71,6 @@ var Node = function(id)
   
   this.h = 0;
   this.g = 0;
-  this.calculateH = function() { this.h = 100*(Math.abs(this.x-this.end.x) + Math.abs(this.y-this.end.y)); console.log(this.h); }; //overwrite me
-  this.calculateGTo = function(node) { return node.calculateGFrom(this); };
-  this.calculateGFrom = function(node) { return node.g+1; }; //overwrite me
-  this.evaluate = function() { return this.score; };
 
   this.reset = function()
   {
@@ -90,12 +84,16 @@ var Node = function(id)
   };
   this.reset();
 };
+AStarNode.prototype.calculateH = function(node) { this.h = 1; }; //overwrite me
+AStarNode.prototype.calculateGTo = function(node) { return node.calculateGFrom(this); };
+AStarNode.prototype.calculateGFrom = function(node) { return node.g+1; }; //overwrite me
+AStarNode.prototype.evaluate = function() { return this.score; };
 
 var Map = function(id)
 {
   var nodes = new RegistrationList("MAP_"+id);
 
-  this.constructGrid = function(width, height, end, stage)
+  this.constructGrid = function(width, height)
   {
     nodes.empty();
     var pos = [];
@@ -105,27 +103,9 @@ var Map = function(id)
       pos[i] = [];
       for(var j = 0; j < height; j++)
       {
-        tmpNode = new Node(i+"_"+j);
-        
-        // THIS IS BS
-        tmpNode.x = i;
-        tmpNode.y = j;
-        tmpNode.stage = stage;
-        tmpNode.draw = function()
-        {
-          this.stage.fillStyle = "#"+Math.floor(this.score/20)+""+Math.floor(this.score/20)+""+Math.floor(this.score/20);
-          this.stage.fillRect(this.x*20+2, this.y*20+2, 16, 16);
-        }
-        tmpNode.drawC = function()
-        {
-          this.stage.fillStyle = "#0"+Math.floor(this.score/20)+"F"+Math.floor(this.score/20)+"0"+Math.floor(this.score/20);
-          this.stage.fillRect(this.x*20+2, this.y*20+2, 16, 16);
-        }
-        // END BS
-
+        tmpNode = new AStarNode(i+"_"+j);
+        tmpNode.content = {"x":i,"y":j};
         pos[i][j] = tmpNode;
-        tmpNode.end = end;
-        tmpNode.calculateH();
         nodes.register(tmpNode);
       }
     }
@@ -150,32 +130,42 @@ var Map = function(id)
   {
     nodes.performMemberFunction("reset", null);
   };
-};
-
-var aStarTraverse = function(map, startNode, endNode, stage)
-{
-  alert(startNode.id + " " + endNode.id);
-  map.resetNodes();
-  startNode.isStart = true;
-  endNode.isEnd = true;
   
-  stage.fillStyle = "#FF0000";
-  stage.fillRect(endNode.x*20+2, endNode.y*20+2, 16, 16);
-
-  var closeNode = function(node)
+  this.calculateHs = function(node)
   {
-    console.log("closing node "+node.id);
-    node.informNeighborsOfClosing();
-    node.closed = true;
-    node.tryToAddNeighborsToPath(openNodes);
-    node.drawC();
+    nodes.performMemberFunction("calculateH", node);
   };
 
-  var openNodes = new BinaryTree("OPEN_NODES");
-  startNode.score = 0;
-  openNodes.add(startNode);
+  this.getBestPath = function(startNode, endNode)
+  {
+    this.resetNodes();
+    startNode.isStart = true;
+    endNode.isEnd = true;
+    this.calculateHs(endNode);
+    var bestPath = new RegistrationList("BEST_PATH_"+startNode.id+"_"+endNode.id);
+  
+    var closeNode = function(node)
+    {
+      if(node.isEnd)
+        return node.getPath(bestPath);
+      else
+      {
+        node.informNeighborsOfClosing();
+        node.closed = true;
+        node.tryToAddNeighborsToPath(openNodes);
+        return null;
+      }
+    };
 
-  var n;
-  while(n = openNodes.popSmallest())
-    closeNode(n);
+    var openNodes = new BinaryTree("OPEN_NODES");
+    startNode.score = 0;
+    openNodes.add(startNode);
+  
+    var n;
+    var path;
+    while(n = openNodes.popSmallest())
+      if(path = closeNode(n)) return path;
+      
+    return null;
+  };
 };
