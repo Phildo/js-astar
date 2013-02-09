@@ -37,7 +37,6 @@ function getRandomPath()
   rex = Math.floor(Math.random()*n);
   rey = Math.floor(Math.random()*n);
 
-  console.log(rsx+" "+rsy+" "+rex+" "+rex);
   path = map.getBestPath(nodes[rsx][rsy],nodes[rex][rey]);
   it = path.getIterator();
   var str = "("+rsx+","+rsy+")->("+rex+","+rey+"):";

@@ -114,6 +114,11 @@ var RegistrationList = function(identifier)
     return self.head.next.content;
   };
 
+  self.hasMember = function(content)
+  {
+    return content.RNodeMap[self.identifier];
+  };
+
   self.empty = function()
   {
     var m;

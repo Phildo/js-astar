@@ -19,6 +19,16 @@ var AStarNode = function(id)
   {
     availableToNeighbors.moveMemberToList(node, closedToNeighbors);
   };
+  this.disallowPassage = function()
+  {
+    var i = fromNeighbors.getIterator();
+    var n;
+    var ns = [];
+    while(n = i.next())
+      ns[ns.length] = n;
+    for(var k = 0; k < ns.length; k++)
+      ns[k].disconnectTo(this);
+  };
 
   this.tryToAddNeighborsToPath = function(openNodes)
   {
@@ -45,7 +55,7 @@ var AStarNode = function(id)
   this.getPath = function(list)
   {
     list.register(this);
-    if(!this.parent.isStart) return this.parent.getPath(list);
+    if(this.parent) return this.parent.getPath(list);
     else return list;
   };
 
@@ -64,8 +74,10 @@ var AStarNode = function(id)
   };
   this.disconnectTo = function(node)
   {
-    availableToNeighbors.unregister(node);
-    closedToNeighbors.unregister(node);
+    if(availableToNeighbors.hasMember(node))
+      availableToNeighbors.unregister(node);
+    if(closedToNeighbors.hasMember(node))
+      closedToNeighbors.unregister(node);
     node.beDisconnectedFrom(this);
   };
   
@@ -104,7 +116,7 @@ var Map = function(id)
       for(var j = 0; j < height; j++)
       {
         tmpNode = new AStarNode(i+"_"+j);
-        tmpNode.content = {"x":i,"y":j,"height":0};
+        tmpNode.content = {"x":i,"y":j,"height":0,"block":false};
         pos[i][j] = tmpNode;
         nodes.register(tmpNode);
       }
@@ -123,6 +135,7 @@ var Map = function(id)
           pos[i][j].connectTo(pos[i][j+1]);
       }
     }
+    this.resetNodes();
     return pos;
   };
   
@@ -138,7 +151,6 @@ var Map = function(id)
 
   this.getBestPath = function(startNode, endNode)
   {
-    this.resetNodes();
     startNode.isStart = true;
     endNode.isEnd = true;
     this.calculateHs(endNode);
@@ -162,10 +174,24 @@ var Map = function(id)
     openNodes.add(startNode);
   
     var n;
-    var path;
-    while(n = openNodes.popSmallest())
-      if(path = closeNode(n)) return path;
+    var path = null;
+    while((n = openNodes.popSmallest()) && !path)
+      path = closeNode(n);
       
-    return null;
+    this.resetNodes();
+    return path;
+  };
+
+  this.getBestStep = function(startNode, endNode)
+  {
+    var step = null;
+    var path = this.getBestPath(startNode, endNode)
+    if(path)
+    {
+      var i = path.getIterator();
+      if(step = i.next()) step = i.next();
+      path.empty();
+    }
+    return step;
   };
 };
