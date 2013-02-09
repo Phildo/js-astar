@@ -45,7 +45,7 @@ var AStarNode = function(id)
   this.getPath = function(list)
   {
     list.register(this);
-    if(!this.isStart) return this.parent.getPath(list);
+    if(!this.parent.isStart) return this.parent.getPath(list);
     else return list;
   };
 
@@ -104,7 +104,7 @@ var Map = function(id)
       for(var j = 0; j < height; j++)
       {
         tmpNode = new AStarNode(i+"_"+j);
-        tmpNode.content = {"x":i,"y":j};
+        tmpNode.content = {"x":i,"y":j,"height":0};
         pos[i][j] = tmpNode;
         nodes.register(tmpNode);
       }

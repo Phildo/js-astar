@@ -1,0 +1,82 @@
+<html>
+<head>
+<script type='text/javascript' src='registrationlist.js'></script>
+<script type='text/javascript' src='binarytree.js'></script>
+<script type='text/javascript' src='canv.js'></script>
+<script type='text/javascript' src='astar.js'></script>
+<script type='text/javascript'>
+var c = new Canv(500,500);
+c.canvas.style.border = "1px solid black";
+
+var map;
+var n = 10;
+
+var rx, ry;
+
+var nodes;
+var you;
+var end;
+var path;
+
+function doit()
+{
+  document.getElementById("canvas_container").appendChild(c.canvas);
+
+  AStarNode.prototype.calculateH = function(node) 
+  { 
+    this.h = 50*(Math.abs(node.content.x-this.content.x)+Math.abs(node.content.y-this.content.y)); 
+  };
+  AStarNode.prototype.calculateGFrom = function(node)
+  {
+    return node.g+node.content.height-this.content.height;
+  };
+
+  map = new Map("Test");
+  nodes = map.constructGrid(n,n);
+  you = nodes[0][0];
+  end = nodes[0][0];
+  
+  tick();
+}
+
+function tick()
+{
+  if(you == end) setRandomEnd();
+  path = map.getBestPath(you,end);
+  if(path) you = path.firstMember();
+  path.empty();
+  draw();
+  setTimeout(tick, 10);
+}
+
+function draw()
+{
+  for(var i = 0; i < n; i++)
+  {
+    for(var j = 0; j < n; j++)
+    {
+      console.log(i+" "+j);
+      if(nodes[i][j].isEnd) c.context.fillStyle = "#FF0000";
+      else if(nodes[i][j].isStart) c.context.fillStyle = "#00FF00";
+      else c.context.fillStyle = "#000000"; //{ var h = Math.floor(nodes[i][j].height/10); c.context.fillStyle == "#"+h+""+h+""+h; }
+      c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
+    }
+  }
+};
+
+function setRandomEnd()
+{
+  rx = Math.floor(Math.random()*n);
+  ry = Math.floor(Math.random()*n);
+
+  end = nodes[rx][ry];
+};
+
+window.addEventListener('load',doit,false);
+</script>
+</head>
+<body >
+  <div id="canvas_container">
+  </div>
+</body>
+</html>
