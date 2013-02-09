@@ -10,10 +10,7 @@ var AStarNode = function(id)
 
   this.informNeighborsOfClosing = function()
   {
-    var i = availableToNeighbors.getIterator();
-    var n;
-    while(n = i.next())
-      n.learnOfClosingNode(this);
+    availableToNeighbors.performMemberFunction('learnOfClosingNode',this);
   };
   this.learnOfClosingNode = function(node)
   {
@@ -21,30 +18,17 @@ var AStarNode = function(id)
   };
   this.allowPassage = function()
   {
-    var i = availableToNeighbors.getIterator();
-    var n;
-    var ns = [];
-    while(n = i.next())
-      ns[ns.length] = n;
-    for(var k = 0; k < ns.length; k++)
-      ns[k].connectTo(this);
+    availableToNeighbors.performMemberFunction('connectTo',this);
   };
   this.disallowPassage = function()
   {
-    var i = fromNeighbors.getIterator();
-    var n;
-    var ns = [];
-    while(n = i.next())
-      ns[ns.length] = n;
-    for(var k = 0; k < ns.length; k++)
-      ns[k].disconnectTo(this);
+    fromNeighbors.performMemberFunction('disconnectTo',this);
   };
 
   this.tryToAddNeighborsToPath = function(openNodes)
   {
     var i = availableToNeighbors.getIterator();
     var n;
-    var max = 100;
     while(n = i.next())
       n.tryToBeAddedToPath(this, openNodes);
   };
@@ -84,10 +68,7 @@ var AStarNode = function(id)
   };
   this.disconnectTo = function(node)
   {
-    if(availableToNeighbors.hasMember(node))
-      availableToNeighbors.unregister(node);
-    if(closedToNeighbors.hasMember(node))
-      closedToNeighbors.unregister(node);
+    availableToNeighbors.unregister(node);
     node.beDisconnectedFrom(this);
   };
   

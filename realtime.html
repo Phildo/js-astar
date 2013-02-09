@@ -46,33 +46,8 @@ function doit()
 
 function tick()
 {
-  while(pt = blockQueue.firstMember())
-  {
-    var x = Math.floor((pt.x/c.canvas.width)*n);
-    var y = Math.floor((pt.y/c.canvas.width)*n);
-    if(x >= 0 && x < n && y >= 0 && y < n && 
-       nodes[x][y] != you && nodes[x][y] != end &&
-       !nodes[x][y].content.block)
-    {
-          nodes[x][y].disallowPassage();
-          nodes[x][y].content.block = true;;
-    }
-    blockQueue.unregister(pt);
-  }
-  while(pt = unblockQueue.firstMember())
-  {
-    var x = Math.floor((pt.x/c.canvas.width)*n);
-    var y = Math.floor((pt.y/c.canvas.width)*n);
-    if(x >= 0 && x < n && y >= 0 && y < n && 
-       nodes[x][y] != you && nodes[x][y] != end &&
-       nodes[x][y].content.block)
-    {
-          nodes[x][y].allowPassage();
-          nodes[x][y].content.block = false;;
-    }
-    blockQueue.unregister(pt);
-  }
-  
+  dequeueBlocks();
+  dequeueUnblocks();
   while(you == end) setRandomEnd();
   step = map.getBestStep(you,end);
   if(step) you = step;
@@ -107,6 +82,8 @@ function setRandomEnd()
 
   end = nodes[rx][ry];
 };
+
+// WALL INPUT HANDLING
 
 function addToBlockQueue(e)
 {
@@ -144,6 +121,40 @@ function stopBlocking(e)
   }
 };
 
+function dequeueBlocks()
+{
+  while(pt = blockQueue.firstMember())
+  {
+    var x = Math.floor((pt.x/c.canvas.width)*n);
+    var y = Math.floor((pt.y/c.canvas.width)*n);
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != you && nodes[x][y] != end &&
+       !nodes[x][y].content.block)
+    {
+          nodes[x][y].disallowPassage();
+          nodes[x][y].content.block = true;;
+    }
+    blockQueue.unregister(pt);
+  }
+}
+
+function dequeueUnblocks()
+{
+  while(pt = unblockQueue.firstMember())
+  {
+    var x = Math.floor((pt.x/c.canvas.width)*n);
+    var y = Math.floor((pt.y/c.canvas.width)*n);
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != you && nodes[x][y] != end &&
+       nodes[x][y].content.block)
+    {
+          nodes[x][y].allowPassage();
+          nodes[x][y].content.block = false;;
+    }
+    blockQueue.unregister(pt);
+  }
+}
+  
 function downShift(e)
 {
   if(e.keyCode == 16) shiftDown = true;
@@ -153,11 +164,12 @@ function upShift(e)
   if(e.keyCode == 16) shiftDown = false;
 };
 
-window.addEventListener('load',doit,false);
 document.addEventListener('mousedown', startBlocking, false);
 document.addEventListener('mouseup', stopBlocking, false);
 document.addEventListener('keydown', downShift, false);
 document.addEventListener('keyup', upShift, false);
+
+window.addEventListener('load',doit,false);
 </script>
 </head>
 <body >
