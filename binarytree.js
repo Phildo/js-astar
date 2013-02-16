@@ -21,9 +21,9 @@ var BinaryTree = function(identifier)
       });
     }
   };
-  BNode.prototype.isALeaf = function() { if(this.left == null && this.right == null) return true; else return false; };
-  BNode.prototype.isAHead = function() { if(this.parent == null) return true; else return false; };
-  BNode.prototype.isLeftChild = function() { if(this.parent.left == this) return true; else if(this.parent.right == this) return false; };
+  BNode.prototype.isALeaf = function() { return this.left == null && this.right == null; };
+  BNode.prototype.isAHead = function() { return this.parent == null; };
+  BNode.prototype.isLeftChild = function() { return this.parent.left == this; };
   BNode.prototype.numChildren = function() { var num = 0; if(this.left != null) num++; if(this.right != null) num++; return num; };
 
   self.head = null;
