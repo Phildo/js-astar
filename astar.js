@@ -1,5 +1,5 @@
 var MAX_SCORE = 999999999;
-var AStarGraph = function(identifier, calculateH, calculateGFrom)
+var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
 {
   var self = this;
   this.identifier = identifier;
@@ -44,7 +44,7 @@ var AStarGraph = function(identifier, calculateH, calculateGFrom)
     this.tryToBeAddedToPath = function(node, openNodes)
     {
       var s;
-      var g = calculateGFrom(node.content, node.g, this.content);
+      var g = calculateGFromNodeToNode(node.content, node.g, this.content);
       if((s = this.h + g) < this.score)
       {
         this.parent = node;
@@ -52,12 +52,14 @@ var AStarGraph = function(identifier, calculateH, calculateGFrom)
           openNodes.remove(this);
         this.score = s;
         this.g = g;
+        this.content.COLORopened = true;
         openNodes.add(this);
       }
     };
     this.getPath = function(list)
     {
       list[list.length] = this;
+      this.content.COLORispath = true;
       if(this.parent) return this.parent.getPath(list);
       else return list;
     };
@@ -94,12 +96,19 @@ var AStarGraph = function(identifier, calculateH, calculateGFrom)
       while(m = closedToNeighbors.firstMember())
         closedToNeighbors.moveMemberToList(m, availableToNeighbors);
     };
+    
+    this.resetCOLOR = function()
+    {
+      this.content.COLORclosed = false;
+      this.content.COLORopened = false;
+      this.content.COLORispath = false;
+    }
     this.reset();
   };
   //calculateH = function(node, goalNode) { return 1; };
   this.calculateH = calculateH;
-  //calculateGFrom = function(nodeA, g, nodeB) { return g+1; };
-  this.calculateGFrom = calculateGFrom;
+  //calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1; };
+  this.calculateGFromNodeToNode = calculateGFromNodeToNode;
   AStarNode.prototype.evaluate = function() { return this.score; };
   
   
@@ -128,6 +137,11 @@ var AStarGraph = function(identifier, calculateH, calculateGFrom)
     nodes.performMemberFunction("reset", null);
   };
   
+  this.resetNodesCOLOR = function()
+  {
+    nodes.performMemberFunction("resetCOLOR", null);
+  };
+  
   this.calculateHs = function(goalNode)
   {
     var i = nodes.getIterator();
@@ -140,6 +154,7 @@ var AStarGraph = function(identifier, calculateH, calculateGFrom)
 
   this.getBestPath = function(startContent, endContent)
   {
+    this.resetNodesCOLOR();
     var startNode = startContent.ASNodeMap[self.identifier];
     var endNode = endContent.ASNodeMap[self.identifier];
     startNode.isStart = true;
@@ -149,6 +164,7 @@ var AStarGraph = function(identifier, calculateH, calculateGFrom)
   
     var closeNode = function(node)
     {
+      node.content.COLORclosed = true;
       if(node.isEnd)
         return node.getPath(bestPath);
       else

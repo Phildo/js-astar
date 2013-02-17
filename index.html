@@ -35,8 +35,8 @@ function doit()
 var constructGrid = function(width, height)
 {
   var calculateH = function(node, goalNode)  { return 50*(Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y)); };
-  var calculateGFrom = function(nodeA, g, nodeB) { return 1+g+nodeB.height-nodeA.height; };
-  map = new AStarGraph("Test", calculateH, calculateGFrom);
+  var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+(10*(nodeB.height-nodeA.height)); };
+  map = new AStarGraph("Test", calculateH, calculateGFromNodeToNode);
   
   var pos = [];
   var tmpNode;
@@ -45,7 +45,7 @@ var constructGrid = function(width, height)
     pos[i] = [];
     for(var j = 0; j < height; j++)
     {
-      tmpNode = {"x":i,"y":j,"height":0,"block":false};
+      tmpNode = {"x":i,"y":j,"height":Math.random()*100,"block":false};
       map.add(tmpNode,i+"_"+j);
       pos[i][j] = tmpNode;
     }
@@ -76,7 +76,7 @@ function tick()
   step = map.getBestStep(you,end);
   if(step) you = step;
   draw();
-  setTimeout(tick, 10);
+  setTimeout(tick, 100);
 }
 
 function draw()
@@ -85,10 +85,17 @@ function draw()
   {
     for(var j = 0; j < n; j++)
     {
-      if(nodes[i][j] == end) c.context.fillStyle = "#FF0000";
-      else if(nodes[i][j] == you) c.context.fillStyle = "#00FF00";
-      else if(nodes[i][j].block) c.context.fillStyle = "#555555";
-      else c.context.fillStyle = "#000000"; //{ var h = Math.floor(nodes[i][j].height/10); c.context.fillStyle == "#"+h+""+h+""+h; }
+      var darkness = Math.floor(nodes[i][j].height);
+      var r = darkness;
+      var g = darkness;
+      var b = darkness;
+      if(nodes[i][j] == end)      r = 255;
+      else if(nodes[i][j] == you) g = 255;
+      else if(nodes[i][j].block) { r = 255; g = 255; b = 255; }
+      else if(nodes[i][j].COLORispath) b = 255;
+      else if(nodes[i][j].COLORclosed) b = 200;
+      else if(nodes[i][j].COLORopened) b = 150;
+      c.context.fillStyle = "rgba("+r+","+g+","+b+",1)";
       c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
     }
   }
