@@ -46,7 +46,7 @@ var constructGrid = function(width, height)
     pos[i] = [];
     for(var j = 0; j < height; j++)
     {
-      tmpNode = {"x":i,"y":j,"height":Math.random()*100,"block":false};
+      tmpNode = {"x":i,"y":j,"height":Math.round(Math.random()*100),"block":false};
       map.add(tmpNode,i+"_"+j);
       pos[i][j] = tmpNode;
     }
@@ -119,12 +119,12 @@ function setRandomEnd()
 
 function addToBlockQueue(e)
 {
-  blockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+  blockQueue.add({"x":e.clientX-c.canvas.offsetLeft,"y":e.clientY-c.canvas.offsetTop});
 };
 
 function addToUnblockQueue(e)
 {
-  unblockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+  unblockQueue.add({"x":e.clientX-c.canvas.offsetLeft,"y":e.clientY-c.canvas.offsetTop});
 };
 
 function recordClicks(e)
