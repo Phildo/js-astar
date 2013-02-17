@@ -10,6 +10,7 @@ c.canvas.style.border = "1px solid black";
 
 var map;
 var n = 30;//map size
+var ticktime = 100;
 
 var nodes;
 var you;
@@ -76,7 +77,7 @@ function tick()
   step = map.getBestStep(you,end);
   if(step) you = step;
   draw();
-  setTimeout(tick, 100);
+  setTimeout(tick, ticktime);
 }
 
 function draw()
