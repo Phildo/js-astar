@@ -5,57 +5,214 @@
 <script type='text/javascript' src='canv.js'></script>
 <script type='text/javascript' src='astar.js'></script>
 <script type='text/javascript'>
-//var c = new Canv(500,500);
-//c.canvas.style.border = "1px solid black";
-//document.getElementById("canvas_container").appendChild(c.canvas);
+var c = new Canv(500,500);
+c.canvas.style.border = "1px solid black";
 
 var map;
-var n = 100;
-
-var rsx, rsy, rex, rey;
+var n = 30;//map size
 
 var nodes;
-var path;
-var it;
-var tmpnode;
+var you;
+var step;
+var end;
+
+var blockQueue = new LinkedList("BLOCK_QUEUE");
+var unblockQueue = new LinkedList("UNBLOCK_QUEUE");
+var shiftDown = false;
+var pt;
 
 function doit()
 {
-  AStarNode.prototype.calculateH = function(node) 
-  { 
-    this.h = 100*(Math.abs(node.content.x-this.content.x)+Math.abs(node.content.y-this.content.y)); 
-  };
+  document.getElementById("canvas_container").appendChild(c.canvas);
 
-  map = new Map("Test");
-  nodes = map.constructGrid(n,n);
+  nodes = constructGrid(n,n);
+  you = nodes[0][0];
+  end = nodes[0][0];
+  
+  tick();
 }
 
-function getRandomPath()
+var constructGrid = function(width, height)
 {
-  rsx = Math.floor(Math.random()*n);
-  rsy = Math.floor(Math.random()*n);
-  rex = Math.floor(Math.random()*n);
-  rey = Math.floor(Math.random()*n);
+  var calculateH = function(node, goalNode)  { return 50*(Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y)); };
+  var calculateGFrom = function(nodeA, g, nodeB) { return 1+g+nodeB.height-nodeA.height; };
+  map = new AStarGraph("Test", calculateH, calculateGFrom);
+  
+  var pos = [];
+  var tmpNode;
+  for(var i = 0; i < width; i++)
+  {
+    pos[i] = [];
+    for(var j = 0; j < height; j++)
+    {
+      tmpNode = {"x":i,"y":j,"height":0,"block":false};
+      map.add(tmpNode,i+"_"+j);
+      pos[i][j] = tmpNode;
+    }
+  }
+  for(var i = 0; i < width; i++)
+  {
+    for(var j = 0; j < height; j++)
+    {
+      if(i-1 >= 0)
+        map.connectNodeToNode(pos[i][j],pos[i-1][j]);
+      if(i+1 < width)
+        map.connectNodeToNode(pos[i][j],pos[i+1][j]);
+      if(j-1 >= 0)
+        map.connectNodeToNode(pos[i][j],pos[i][j-1]);
+      if(j+1 < height)
+        map.connectNodeToNode(pos[i][j],pos[i][j+1]);
+    }
+  }
+  map.resetNodes();
+  return pos;
+};
 
-  path = map.getBestPath(nodes[rsx][rsy],nodes[rex][rey]);
-  it = path.getIterator();
-  var str = "("+rsx+","+rsy+")->("+rex+","+rey+"):";
-  while(tmpnode = it.next())
-    str+="("+tmpnode.content.x+","+tmpnode.content.y+")";
-  document.getElementById("results").innerHTML+=str+"<br />\n";
-  path.empty();
+function tick()
+{
+  dequeueBlocks();
+  dequeueUnblocks();
+  while(you == end) setRandomEnd();
+  step = map.getBestStep(you,end);
+  if(step) you = step;
+  draw();
+  setTimeout(tick, 10);
 }
+
+function draw()
+{
+  for(var i = 0; i < n; i++)
+  {
+    for(var j = 0; j < n; j++)
+    {
+      if(nodes[i][j] == end) c.context.fillStyle = "#FF0000";
+      else if(nodes[i][j] == you) c.context.fillStyle = "#00FF00";
+      else if(nodes[i][j].block) c.context.fillStyle = "#555555";
+      else c.context.fillStyle = "#000000"; //{ var h = Math.floor(nodes[i][j].height/10); c.context.fillStyle == "#"+h+""+h+""+h; }
+      c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
+    }
+  }
+};
+
+function setRandomEnd()
+{
+  rx = Math.floor(Math.random()*n);
+  ry = Math.floor(Math.random()*n);
+  while(nodes[rx][ry].block == true)
+  {
+    rx = Math.floor(Math.random()*n);
+    ry = Math.floor(Math.random()*n);
+  }
+
+  end = nodes[rx][ry];
+};
+
+// WALL INPUT HANDLING
+
+function addToBlockQueue(e)
+{
+  blockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+};
+
+function addToUnblockQueue(e)
+{
+  unblockQueue.add({"x":e.x-c.canvas.offsetLeft,"y":e.y-c.canvas.offsetTop});
+};
+
+function recordClicks(e)
+{
+  if(!shiftDown)
+  {
+    window.addEventListener('mousemove', addToBlockQueue, false);
+    addToBlockQueue(e);
+  }
+  else if(shiftDown)
+  {
+    window.addEventListener('mousemove', addToUnblockQueue, false);
+    addToUnblockQueue(e);
+    e.stopPropagation();
+  }
+};
+
+function stopRecordingClicks(e)
+{
+  if(!shiftDown)
+    window.removeEventListener('mousemove', addToBlockQueue, false);
+  else if(shiftDown)
+  {
+    window.removeEventListener('mousemove', addToUnblockQueue, false);
+    e.stopPropagation();
+  }
+};
+
+function dequeueBlocks()
+{
+  while(pt = blockQueue.firstMember())
+  {
+    var x = Math.floor((pt.x/c.canvas.width)*n);
+    var y = Math.floor((pt.y/c.canvas.width)*n);
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != you && nodes[x][y] != end &&
+       !nodes[x][y].block)
+    {
+      if(x-1 >= 0)
+        map.disconnectNodeToNode(nodes[x-1][y],nodes[x][y]);
+      if(x+1 < n)
+        map.disconnectNodeToNode(nodes[x+1][y],nodes[x][y]);
+      if(y-1 >= 0)
+        map.disconnectNodeToNode(nodes[x][y-1],nodes[x][y]);
+      if(y+1 < n)
+        map.disconnectNodeToNode(nodes[x][y+1],nodes[x][y]);
+      nodes[x][y].block = true;
+    }
+    blockQueue.remove(pt);
+  }
+}
+
+function dequeueUnblocks()
+{
+  while(pt = unblockQueue.firstMember())
+  {
+    var x = Math.floor((pt.x/c.canvas.width)*n);
+    var y = Math.floor((pt.y/c.canvas.width)*n);
+    if(x >= 0 && x < n && y >= 0 && y < n && 
+       nodes[x][y] != you && nodes[x][y] != end &&
+       nodes[x][y].block)
+    {
+      if(x-1 >= 0)
+        map.connectNodeToNode(nodes[x-1][y],nodes[x][y]);
+      if(x+1 < n)
+        map.connectNodeToNode(nodes[x+1][y],nodes[x][y]);
+      if(y-1 >= 0)
+        map.connectNodeToNode(nodes[x][y-1],nodes[x][y]);
+      if(y+1 < n)
+        map.connectNodeToNode(nodes[x][y+1],nodes[x][y]);
+      nodes[x][y].block = false;
+    }
+    console.log('doin');
+    unblockQueue.remove(pt);
+  }
+}
+  
+function downShift(e)
+{
+  if(e.keyCode == 16) shiftDown = true;
+};
+function upShift(e)
+{
+  if(e.keyCode == 16) shiftDown = false;
+};
+
+document.addEventListener('mousedown', recordClicks, false);
+document.addEventListener('mouseup', stopRecordingClicks, false);
+document.addEventListener('keydown', downShift, false);
+document.addEventListener('keyup', upShift, false);
 
 window.addEventListener('load',doit,false);
 </script>
 </head>
 <body >
   <div id="canvas_container">
-  </div>
-  <div id="getRandom" onclick="getRandomPath();">
-  Get Random Path
-  </div>
-  <div id="results">
   </div>
 </body>
 </html>

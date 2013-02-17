@@ -5,14 +5,13 @@ var LinkedList = function(identifier)
 
   var LLNode = function(content)
   {
-    var node = this;
-    node.prev = null;
-    node.next = null;
-    node.content = content;
+    this.prev = null;
+    this.next = null;
+    this.content = content;
 
-    if(node.content !== null && typeof node.content.LLNodeMap === 'undefined')
+    if(this.content !== null && typeof this.content.LLNodeMap === 'undefined')
     {
-      Object.defineProperty(node.content, "LLNodeMap", {
+      Object.defineProperty(this.content, "LLNodeMap", {
         enumerable:false,
         configurable:true,
         writable:true,

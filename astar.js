@@ -1,133 +1,126 @@
 var MAX_SCORE = 999999999;
-var AStarNode = function(id)
+var AStarGraph = function(identifier, calculateH, calculateGFrom)
 {
-  this.id = id;
-  //"To" = away from self (from this node TO another node)
-  //"From" = toward self (FROM another node to this node)
-  var availableToNeighbors = new LinkedList("NODE_"+id+"_AVAILABLE_TO_NEIGHBORS");
-  var closedToNeighbors = new LinkedList("NODE_"+id+"_CLOSED_TO_NEIGHBORS");
-  var fromNeighbors = new LinkedList("NODE_"+id+"_FROM_NEIGHBORS"); //neighbors from which this node is accessible
-
-  this.informNeighborsOfClosing = function()
+  var self = this;
+  this.identifier = identifier;
+  
+  var AStarNode = function(content, identifier)
   {
-    availableToNeighbors.performMemberFunction('learnOfClosingNode',this);
-  };
-  this.learnOfClosingNode = function(node)
-  {
-    availableToNeighbors.moveMemberToList(node, closedToNeighbors);
-  };
-  this.allowPassage = function()
-  {
-    availableToNeighbors.performMemberFunction('connectTo',this);
-  };
-  this.disallowPassage = function()
-  {
-    fromNeighbors.performMemberFunction('disconnectTo',this);
-  };
-
-  this.tryToAddNeighborsToPath = function(openNodes)
-  {
-    var i = availableToNeighbors.getIterator();
-    var n;
-    while(n = i.next())
-      n.tryToBeAddedToPath(this, openNodes);
-  };
-  this.tryToBeAddedToPath = function(node, openNodes)
-  {
-    var s;
-    var g = this.calculateGFrom(node);
-    if((s = this.h + g) < this.score)
+    this.identifier = identifier;
+    this.content = content;
+    
+    if(this.content !== null && typeof this.content.ASNodeMap === 'undefined')
     {
-      this.parent = node;
-      if(this.score != MAX_SCORE)
-        openNodes.remove(this);
-      this.score = s;
-      this.g = g;
-      openNodes.add(this);
+      Object.defineProperty(this.content, "ASNodeMap", {
+        enumerable:false,
+        configurable:true,
+        writable:true,
+        value:{}
+      });
     }
+    
+    //"To" = away from self (from this node TO another node)
+    //"From" = toward self (FROM another node to this node)
+    var availableToNeighbors = new LinkedList("NODE_"+identifier+"_AVAILABLE_TO_NEIGHBORS");
+    var closedToNeighbors = new LinkedList("NODE_"+identifier+"_CLOSED_TO_NEIGHBORS");
+    var fromNeighbors = new LinkedList("NODE_"+identifier+"_FROM_NEIGHBORS"); //neighbors from which this node is accessible
+  
+    this.informNeighborsOfClosing = function()
+    {
+      availableToNeighbors.performMemberFunction('learnOfClosingNode',this);
+    };
+    this.learnOfClosingNode = function(node)
+    {
+      availableToNeighbors.moveMemberToList(node, closedToNeighbors);
+    };
+  
+    this.tryToAddNeighborsToPath = function(openNodes)
+    {
+      var i = availableToNeighbors.getIterator();
+      var n;
+      while(n = i.next())
+        n.tryToBeAddedToPath(this, openNodes);
+    };
+    this.tryToBeAddedToPath = function(node, openNodes)
+    {
+      var s;
+      var g = calculateGFrom(node.content, node.g, this.content);
+      if((s = this.h + g) < this.score)
+      {
+        this.parent = node;
+        if(this.score != MAX_SCORE) //it has already been added to openNodes before
+          openNodes.remove(this);
+        this.score = s;
+        this.g = g;
+        openNodes.add(this);
+      }
+    };
+    this.getPath = function(list)
+    {
+      list[list.length] = this;
+      if(this.parent) return this.parent.getPath(list);
+      else return list;
+    };
+  
+    this.beConnectedFrom = function(node)
+    {
+      fromNeighbors.add(node);
+    };
+    this.connectTo = function(node)
+    {
+      availableToNeighbors.add(node);
+      node.beConnectedFrom(this);
+    };
+    this.beDisconnectedFrom = function(node)
+    {
+      fromNeighbors.remove(node);
+    };
+    this.disconnectTo = function(node)
+    {
+      availableToNeighbors.remove(node);
+      node.beDisconnectedFrom(this);
+    };
+    
+    this.h = 0;
+    this.g = 0;
+  
+    this.reset = function()
+    {
+      this.score = MAX_SCORE;
+      this.parent = null;
+      this.isStart = false;
+      this.isEnd = false;
+      var m;
+      while(m = closedToNeighbors.firstMember())
+        closedToNeighbors.moveMemberToList(m, availableToNeighbors);
+    };
+    this.reset();
   };
-  this.getPath = function(list)
+  //calculateH = function(node, goalNode) { return 1; };
+  this.calculateH = calculateH;
+  //calculateGFrom = function(nodeA, g, nodeB) { return g+1; };
+  this.calculateGFrom = calculateGFrom;
+  AStarNode.prototype.evaluate = function() { return this.score; };
+  
+  
+  var nodes = new LinkedList("MAP_"+identifier);
+  
+  //PUBLIC FUNCTIONS
+  this.add = function(content, identifier)
   {
-    list.add(this);
-    if(this.parent) return this.parent.getPath(list);
-    else return list;
-  };
-
-  this.beConnectedFrom = function(node)
-  {
-    fromNeighbors.add(node);
-  };
-  this.connectTo = function(node)
-  {
-    availableToNeighbors.add(node);
-    node.beConnectedFrom(this);
-  };
-  this.beDisconnectedFrom = function(node)
-  {
-    fromNeighbors.remove(node);
-  };
-  this.disconnectTo = function(node)
-  {
-    availableToNeighbors.remove(node);
-    node.beDisconnectedFrom(this);
+    var tmpNode = new AStarNode(content, identifier);
+    tmpNode.content.ASNodeMap[self.identifier] = tmpNode;
+    nodes.add(tmpNode);
   };
   
-  this.h = 0;
-  this.g = 0;
-
-  this.reset = function()
+  this.connectNodeToNode = function(contentA, contentB)
   {
-    this.score = MAX_SCORE;
-    this.parent = null;
-    this.isStart = false;
-    this.isEnd = false;
-    var m;
-    while(m = closedToNeighbors.firstMember())
-      closedToNeighbors.moveMemberToList(m, availableToNeighbors);
+    contentA.ASNodeMap[self.identifier].connectTo(contentB.ASNodeMap[self.identifier]);
   };
-  this.reset();
-};
-AStarNode.prototype.calculateH = function(node) { this.h = 1; }; //overwrite me
-AStarNode.prototype.calculateGTo = function(node) { return node.calculateGFrom(this); };
-AStarNode.prototype.calculateGFrom = function(node) { return node.g+1; }; //overwrite me
-AStarNode.prototype.evaluate = function() { return this.score; };
-
-var Map = function(id)
-{
-  var nodes = new LinkedList("MAP_"+id);
-
-  this.constructGrid = function(width, height)
+  
+  this.disconnectNodeToNode = function(contentA, contentB)
   {
-    nodes.empty();
-    var pos = [];
-    var tmpNode;
-    for(var i = 0; i < width; i++)
-    {
-      pos[i] = [];
-      for(var j = 0; j < height; j++)
-      {
-        tmpNode = new AStarNode(i+"_"+j);
-        tmpNode.content = {"x":i,"y":j,"height":0,"block":false};
-        pos[i][j] = tmpNode;
-        nodes.add(tmpNode);
-      }
-    }
-    for(var i = 0; i < width; i++)
-    {
-      for(var j = 0; j < height; j++)
-      {
-        if(i-1 >= 0)
-          pos[i][j].connectTo(pos[i-1][j]);
-        if(i+1 < width)
-          pos[i][j].connectTo(pos[i+1][j]);
-        if(j-1 >= 0)
-          pos[i][j].connectTo(pos[i][j-1]);
-        if(j+1 < height)
-          pos[i][j].connectTo(pos[i][j+1]);
-      }
-    }
-    this.resetNodes();
-    return pos;
+    contentA.ASNodeMap[self.identifier].disconnectTo(contentB.ASNodeMap[self.identifier]);
   };
   
   this.resetNodes = function()
@@ -135,17 +128,24 @@ var Map = function(id)
     nodes.performMemberFunction("reset", null);
   };
   
-  this.calculateHs = function(node)
+  this.calculateHs = function(goalNode)
   {
-    nodes.performMemberFunction("calculateH", node);
+    var i = nodes.getIterator();
+    var n;
+    while(n = i.next())
+    {
+      n.h = this.calculateH(n.content, goalNode.content);
+    }
   };
 
-  this.getBestPath = function(startNode, endNode)
+  this.getBestPath = function(startContent, endContent)
   {
+    var startNode = startContent.ASNodeMap[self.identifier];
+    var endNode = endContent.ASNodeMap[self.identifier];
     startNode.isStart = true;
     endNode.isEnd = true;
     this.calculateHs(endNode);
-    var bestPath = new LinkedList("BEST_PATH_"+startNode.id+"_"+endNode.id);
+    var bestPath = [];
   
     var closeNode = function(node)
     {
@@ -160,7 +160,7 @@ var Map = function(id)
       }
     };
 
-    var openNodes = new BinaryTree("OPEN_NODES");
+    var openNodes = new BinaryTree(self.identifier+"_OPEN_NODES");
     startNode.score = 0;
     openNodes.add(startNode);
   
@@ -173,16 +173,12 @@ var Map = function(id)
     return path;
   };
 
-  this.getBestStep = function(startNode, endNode)
+  this.getBestStep = function(startContent, endContent)
   {
-    var step = null;
-    var path = this.getBestPath(startNode, endNode)
-    if(path)
-    {
-      var i = path.getIterator();
-      if(step = i.next()) step = i.next();
-      path.empty();
-    }
-    return step;
+    var step = {"content":null};
+    var path = this.getBestPath(startContent, endContent)
+    if(path && path.length >= 2)
+      step = path[path.length-2];
+    return step.content;
   };
 };
