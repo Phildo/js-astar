@@ -228,9 +228,9 @@ function tick()
   }
   shouldAlterHeight = false;
   while(you == end) setRandomEnd();
-  if(shouldTick) step = map.getBestStep(you,end);
+  step = map.getBestStep(you,end);
   draw();
-  if(step) you = step;
+  if(shouldTick && step) you = step;
   setTimeout(tick, ticktime);
 };
 
