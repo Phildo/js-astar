@@ -82,9 +82,6 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
       node.beDisconnectedFrom(this);
     };
     
-    this.h = MAX_SCORE;
-    this.g = MAX_SCORE;
-  
     this.reset = function()
     {
       this.parent = null;
