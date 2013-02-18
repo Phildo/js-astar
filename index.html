@@ -41,8 +41,6 @@ function doit()
 
 var constructGrid = function(size)
 {
-  //var calculateH = function(node, goalNode)  { return 50*(Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y)); };
-  //var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+(10*(nodeB.height-nodeA.height)); };
   var calculateH = function(node, goalNode) { return Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y); };
   var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1+nodeB.height; };
   map = new AStarGraph("Test", calculateH, calculateGFromNodeToNode);
