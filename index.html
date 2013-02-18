@@ -199,8 +199,8 @@ function tick()
   shouldAlterHeight = false;
   while(you == end) setRandomEnd();
   step = map.getBestStep(you,end);
-  if(step) { you.ASTAR_STATE_ispath = false; you.ASTAR_STATE_g_ness = 0; you = step; }
   draw();
+  if(step) you = step;
   if(shouldTick) setTimeout(tick, ticktime);
 };
 
