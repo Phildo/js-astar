@@ -50,7 +50,6 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
         if(this.g != MAX_SCORE) //it has already been added to openNodes before
           openNodes.remove(this);
         this.g = g;
-        this.score = this.g + this.h;
         this.content.ASTAR_STATE_g_ness = this.g;
         this.content.ASTAR_STATE_opened = true;
         openNodes.add(this);
@@ -85,7 +84,6 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
     
     this.h = MAX_SCORE;
     this.g = MAX_SCORE;
-    this.score = MAX_SCORE;
   
     this.reset = function()
     {
@@ -94,7 +92,6 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
       this.isEnd = false;
       this.h = MAX_SCORE;
       this.g = MAX_SCORE;
-      this.score = MAX_SCORE;
       var m;
       while(m = closedToNeighbors.firstMember())
         closedToNeighbors.moveMemberToList(m, availableToNeighbors);
@@ -115,7 +112,7 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
   this.calculateH = calculateH;
   //calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1; };
   this.calculateGFromNodeToNode = calculateGFromNodeToNode;
-  AStarNode.prototype.evaluate = function() { return this.score; };
+  AStarNode.prototype.evaluate = function() { return this.g + this.h; };
   
   
   var nodes = new LinkedList("MAP_"+identifier);
@@ -182,7 +179,6 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
     };
 
     var openNodes = new BinaryTree(self.identifier+"_OPEN_NODES");
-    startNode.g = 0;
     openNodes.add(startNode);
   
     var n;
