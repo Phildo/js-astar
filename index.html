@@ -11,6 +11,7 @@ c.canvas.style.border = "1px solid black";
 var map;
 var n = 30;//map size
 var ticktime = 100;
+var brushsize = 1;
 
 var nodes;
 var you;
@@ -20,7 +21,12 @@ var end;
 var blockQueue = new LinkedList("BLOCK_QUEUE");
 var unblockQueue = new LinkedList("UNBLOCK_QUEUE");
 var shiftDown = false;
-var pt;
+var shouldAddSize = false;
+var shouldTick = true;
+var shouldClear = false;
+var vStyle = 0; var vStyleCount = 1;
+var shouldAlterHeight = false;
+var hStyle = 0; var hStyleCount = 2;
 
 function doit()
 {
@@ -31,37 +37,39 @@ function doit()
   end = nodes[0][0];
   
   tick();
-}
+};
 
-var constructGrid = function(width, height)
+var constructGrid = function(size)
 {
-  var calculateH = function(node, goalNode)  { return 50*(Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y)); };
-  var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+(10*(nodeB.height-nodeA.height)); };
+  //var calculateH = function(node, goalNode)  { return 50*(Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y)); };
+  //var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+(10*(nodeB.height-nodeA.height)); };
+  var calculateH = function(node, goalNode) { return Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y); };
+  var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1+nodeB.height; };
   map = new AStarGraph("Test", calculateH, calculateGFromNodeToNode);
   
   var pos = [];
   var tmpNode;
-  for(var i = 0; i < width; i++)
+  for(var i = 0; i < size; i++)
   {
     pos[i] = [];
-    for(var j = 0; j < height; j++)
+    for(var j = 0; j < size; j++)
     {
-      tmpNode = {"x":i,"y":j,"height":Math.round(Math.random()*100),"block":false};
+      tmpNode = {"x":i,"y":j,"height":0,"block":false};
       map.add(tmpNode,i+"_"+j);
       pos[i][j] = tmpNode;
     }
   }
-  for(var i = 0; i < width; i++)
+  for(var i = 0; i < size; i++)
   {
-    for(var j = 0; j < height; j++)
+    for(var j = 0; j < size; j++)
     {
       if(i-1 >= 0)
         map.connectNodeToNode(pos[i][j],pos[i-1][j]);
-      if(i+1 < width)
+      if(i+1 < size)
         map.connectNodeToNode(pos[i][j],pos[i+1][j]);
       if(j-1 >= 0)
         map.connectNodeToNode(pos[i][j],pos[i][j-1]);
-      if(j+1 < height)
+      if(j+1 < size)
         map.connectNodeToNode(pos[i][j],pos[i][j+1]);
     }
   }
@@ -69,36 +77,161 @@ var constructGrid = function(width, height)
   return pos;
 };
 
+var addToGrid = function(deltaN)
+{
+  var tmpNode;
+  for(var i = n; i < n+deltaN; i++)
+  {
+    nodes[i] = [];
+    for(j = 0; j < n; j++)
+    {
+      tmpNode = {"x":i,"y":j,"height":0,"block":false};
+      map.add(tmpNode,i+"_"+j);
+      nodes[i][j] = tmpNode;
+    }
+  }
+  for(var i = 0; i < n; i++)
+  {
+    for(j = n; j < n+deltaN; j++)
+    {
+      tmpNode = {"x":i,"y":j,"height":0,"block":false};
+      map.add(tmpNode,i+"_"+j);
+      nodes[i][j] = tmpNode;
+    }
+  }
+  for(var i = n; i < n+deltaN; i++)
+  {
+    for(var j = n; j < n+deltaN; j++)
+    {
+      tmpNode = {"x":i,"y":j,"height":0,"block":false};
+      map.add(tmpNode,i+"_"+j);
+      nodes[i][j] = tmpNode;
+    }
+  }
+
+  for(var i = 0; i < n; i++)
+    map.connectNodeToNode(nodes[i][n-1],nodes[i][n]);
+  for(var j = 0; j < n; j++)
+    map.connectNodeToNode(nodes[n-1][j],nodes[n][j]);
+  for(var i = 0; i < n; i++)
+  {
+    for(j = n; j < n+deltaN; j++)
+    {
+      if(i-1 >= 0 && !nodes[i-1][j].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i-1][j]);
+      if(i+1 < n+deltaN && !nodes[i+1][j].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i+1][j]);
+      if(j-1 >= 0 && !nodes[i][j-1].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i][j-1]);
+      if(j+1 < n+deltaN && !nodes[i][j+1].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i][j+1]);
+    }
+  }
+  for(var i = n; i < n+deltaN; i++)
+  {
+    for(j = 0; j < n; j++)
+    {
+      if(i-1 >= 0 && !nodes[i-1][j].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i-1][j]);
+      if(i+1 < n+deltaN && !nodes[i+1][j].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i+1][j]);
+      if(j-1 >= 0 && !nodes[i][j-1].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i][j-1]);
+      if(j+1 < n+deltaN && !nodes[i][j+1].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i][j+1]);
+    }
+  }
+  for(var i = n; i < n+deltaN; i++)
+  {
+    for(var j = n; j < n+deltaN; j++)
+    {
+      if(i-1 >= 0 && !nodes[i-1][j].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i-1][j]);
+      if(i+1 < n+deltaN && !nodes[i+1][j].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i+1][j]);
+      if(j-1 >= 0 && !nodes[i][j-1].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i][j-1]);
+      if(j+1 < n+deltaN && !nodes[i][j+1].block)
+        map.connectNodeToNode(nodes[i][j],nodes[i][j+1]);
+    }
+  }
+  n += deltaN;
+  map.resetNodes();
+};
+
 function tick()
 {
   dequeueBlocks();
   dequeueUnblocks();
+  if(shouldAddSize) addToGrid(1);
+  shouldAddSize = false;
+  if(shouldClear)
+  {
+      for(var i = 0; i < n; i++)
+        for(var j = 0; j < n; j++)
+          unblockNode(i,j);
+  }
+  shouldClear = false;
+  if(shouldAlterHeight)
+  {
+    switch(hStyle)
+    {
+      case 0: //no height
+        for(var i = 0; i < n; i++)
+        {
+          for(var j = 0; j < n; j++)
+          {
+            nodes[i][j].height = 0;
+          }
+        }
+        break;
+      case 1: //random
+        for(var i = 0; i < n; i++)
+        {
+          for(var j = 0; j < n; j++)
+          {
+            nodes[i][j].height = Math.floor(Math.random()*100);
+          }
+        }
+        break;
+    }
+  }
+  shouldAlterHeight = false;
   while(you == end) setRandomEnd();
   step = map.getBestStep(you,end);
-  if(step) you = step;
+  if(step) { you.ASTAR_STATE_ispath = false; you.ASTAR_STATE_g_ness = 0; you = step; }
   draw();
-  setTimeout(tick, ticktime);
-}
+  if(shouldTick) setTimeout(tick, ticktime);
+};
 
 function draw()
 {
-  for(var i = 0; i < n; i++)
+  switch(vStyle)
   {
-    for(var j = 0; j < n; j++)
-    {
-      var darkness = Math.floor(nodes[i][j].height);
-      var r = darkness;
-      var g = darkness;
-      var b = darkness;
-      if(nodes[i][j] == end)      r = 255;
-      else if(nodes[i][j] == you) g = 255;
-      else if(nodes[i][j].block) { r = 255; g = 255; b = 255; }
-      else if(nodes[i][j].COLORispath) b = 255;
-      else if(nodes[i][j].COLORclosed) b = 200;
-      else if(nodes[i][j].COLORopened) b = 150;
-      c.context.fillStyle = "rgba("+r+","+g+","+b+",1)";
-      c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
-    }
+    case 0: //draw openness
+      for(var i = 0; i < n; i++)
+      {
+        for(var j = 0; j < n; j++)
+        {
+          var darkness = nodes[i][j].height;
+          var r = darkness; 
+          var g = darkness;
+          var b = darkness;
+          
+          //COLOR
+          if(nodes[i][j] == end)     { r = 255; g = 0;   b = 0;   }
+          else if(nodes[i][j] == you){ r = 0;   g = 255; b = 0;   }
+          else if(nodes[i][j].block) { r = 255; g = 255; b = 255; }
+          else if(nodes[i][j].ASTAR_STATE_ispath) b = 255;
+          else if(nodes[i][j].ASTAR_STATE_closed) { r = Math.floor(255*(nodes[i][j].ASTAR_STATE_g_ness/(n*(1+hStyle*9)))); g = 200; }
+          else if(nodes[i][j].ASTAR_STATE_opened) { r = 100; b = 200; }
+          c.context.fillStyle = "rgba("+r+","+g+","+b+",1)";
+          c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
+        }
+      }
+      break;
+    case 1: //draw g-ness
+      break;
   }
 };
 
@@ -153,74 +286,129 @@ function stopRecordingClicks(e)
   }
 };
 
+function blockNode(x,y)
+{
+  if(!(x >= 0 && x < n && y >= 0 && y < n && 
+    nodes[x][y] != you && nodes[x][y] != end &&
+    !nodes[x][y].block)) return;
+  if(x-1 >= 0)
+    map.disconnectNodeToNode(nodes[x-1][y],nodes[x][y]);
+  if(x+1 < n)
+    map.disconnectNodeToNode(nodes[x+1][y],nodes[x][y]);
+  if(y-1 >= 0)
+    map.disconnectNodeToNode(nodes[x][y-1],nodes[x][y]);
+  if(y+1 < n)
+    map.disconnectNodeToNode(nodes[x][y+1],nodes[x][y]);
+  nodes[x][y].block = true;
+};
+
 function dequeueBlocks()
 {
+  var pt;
   while(pt = blockQueue.firstMember())
   {
     var x = Math.floor((pt.x/c.canvas.width)*n);
     var y = Math.floor((pt.y/c.canvas.width)*n);
-    if(x >= 0 && x < n && y >= 0 && y < n && 
-       nodes[x][y] != you && nodes[x][y] != end &&
-       !nodes[x][y].block)
+    blockNode(x,y);
+    if(brushsize > 1)
     {
-      if(x-1 >= 0)
-        map.disconnectNodeToNode(nodes[x-1][y],nodes[x][y]);
-      if(x+1 < n)
-        map.disconnectNodeToNode(nodes[x+1][y],nodes[x][y]);
-      if(y-1 >= 0)
-        map.disconnectNodeToNode(nodes[x][y-1],nodes[x][y]);
-      if(y+1 < n)
-        map.disconnectNodeToNode(nodes[x][y+1],nodes[x][y]);
-      nodes[x][y].block = true;
+      blockNode(x-1,y);
+      blockNode(x,y-1);
+      blockNode(x-1,y-1);
     }
     blockQueue.remove(pt);
   }
-}
+};
+
+function unblockNode(x,y)
+{
+  if(!(x >= 0 && x < n && y >= 0 && y < n && 
+    nodes[x][y] != you && nodes[x][y] != end &&
+    nodes[x][y].block)) return;
+  if(x-1 >= 0)
+    map.connectNodeToNode(nodes[x-1][y],nodes[x][y]);
+  if(x+1 < n)
+    map.connectNodeToNode(nodes[x+1][y],nodes[x][y]);
+  if(y-1 >= 0)
+    map.connectNodeToNode(nodes[x][y-1],nodes[x][y]);
+  if(y+1 < n)
+    map.connectNodeToNode(nodes[x][y+1],nodes[x][y]);
+  nodes[x][y].block = false;
+};
 
 function dequeueUnblocks()
 {
+  var pt;
   while(pt = unblockQueue.firstMember())
   {
     var x = Math.floor((pt.x/c.canvas.width)*n);
     var y = Math.floor((pt.y/c.canvas.width)*n);
-    if(x >= 0 && x < n && y >= 0 && y < n && 
-       nodes[x][y] != you && nodes[x][y] != end &&
-       nodes[x][y].block)
+    unblockNode(x,y);
+    if(brushsize > 1)
     {
-      if(x-1 >= 0)
-        map.connectNodeToNode(nodes[x-1][y],nodes[x][y]);
-      if(x+1 < n)
-        map.connectNodeToNode(nodes[x+1][y],nodes[x][y]);
-      if(y-1 >= 0)
-        map.connectNodeToNode(nodes[x][y-1],nodes[x][y]);
-      if(y+1 < n)
-        map.connectNodeToNode(nodes[x][y+1],nodes[x][y]);
-      nodes[x][y].block = false;
+      unblockNode(x-1,y);
+      unblockNode(x,y-1);
+      unblockNode(x-1,y-1);
     }
-    console.log('doin');
     unblockQueue.remove(pt);
   }
-}
-  
-function downShift(e)
-{
-  if(e.keyCode == 16) shiftDown = true;
 };
-function upShift(e)
+  
+function downKey(e)
+{
+  switch(e.keyCode)
+  {
+    case 16: //shift
+      shiftDown = true;
+      break;
+    case 32: //space
+      shouldTick = !shouldTick;
+      if(shouldTick) tick();
+      break;
+    case 72: //h
+      hStyle = (hStyle+1)%hStyleCount;
+      shouldAlterHeight = true;
+      break;
+    case 86: //v
+      vStyle = (vStyle+1)%vStyleCount;
+      break;
+    case 73: //i
+      shouldAddSize = true;
+      break;
+    case 66: //b
+      if(brushsize == 1) brushsize = 2;
+      else if(brushsize == 2) brushsize = 1;
+      break;
+    case 67: //c
+      shouldClear = true;
+      break;
+  };
+};
+
+function upKey(e)
 {
   if(e.keyCode == 16) shiftDown = false;
 };
 
 document.addEventListener('mousedown', recordClicks, false);
 document.addEventListener('mouseup', stopRecordingClicks, false);
-document.addEventListener('keydown', downShift, false);
-document.addEventListener('keyup', upShift, false);
+document.addEventListener('keydown', downKey, false);
+document.addEventListener('keyup', upKey, false);
 
 window.addEventListener('load',doit,false);
 </script>
 </head>
 <body >
   <div id="canvas_container">
+  </div>
+  <div>
+   spacebar = stop/start; <br />
+   click and drag = draw walls (cannot draw while stopped); <br />
+   shift + click and drag = remove walls (cannot remove while stopped); <br />
+   (c)lear = clear walls; <br />
+   (b)rush = toggle brush size; <br />
+   (h)eight = toggle height map; <br />
+   (i)ncrement = make map bigger (warning for slow cpu's); <br />
   </div>
 </body>
 </html>

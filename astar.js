@@ -1,4 +1,4 @@
-var MAX_SCORE = 999999999;
+var MAX_SCORE = 99999999;
 var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
 {
   var self = this;
@@ -34,32 +34,32 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
       availableToNeighbors.moveMemberToList(node, closedToNeighbors);
     };
   
-    this.tryToAddNeighborsToPath = function(openNodes)
+    this.tryToAddNeighborsToPathAndOpenThem = function(openNodes)
     {
       var i = availableToNeighbors.getIterator();
       var n;
       while(n = i.next())
-        n.tryToBeAddedToPath(this, openNodes);
+        n.tryToBeAddedToPathAndOpened(this, openNodes);
     };
-    this.tryToBeAddedToPath = function(node, openNodes)
+    this.tryToBeAddedToPathAndOpened = function(node, openNodes)
     {
-      var s;
       var g = calculateGFromNodeToNode(node.content, node.g, this.content);
-      if((s = this.h + g) < this.score)
+      if(g < this.g)
       {
         this.parent = node;
-        if(this.score != MAX_SCORE) //it has already been added to openNodes before
+        if(this.g != MAX_SCORE) //it has already been added to openNodes before
           openNodes.remove(this);
-        this.score = s;
         this.g = g;
-        this.content.COLORopened = true;
+        this.score = this.g + this.h;
+        this.content.ASTAR_STATE_g_ness = this.g;
+        this.content.ASTAR_STATE_opened = true;
         openNodes.add(this);
       }
     };
     this.getPath = function(list)
     {
       list[list.length] = this;
-      this.content.COLORispath = true;
+      this.content.ASTAR_STATE_ispath = true;
       if(this.parent) return this.parent.getPath(list);
       else return list;
     };
@@ -83,25 +83,31 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
       node.beDisconnectedFrom(this);
     };
     
-    this.h = 0;
-    this.g = 0;
+    this.h = MAX_SCORE;
+    this.g = MAX_SCORE;
+    this.score = MAX_SCORE;
   
     this.reset = function()
     {
-      this.score = MAX_SCORE;
       this.parent = null;
       this.isStart = false;
       this.isEnd = false;
+      this.h = MAX_SCORE;
+      this.g = MAX_SCORE;
+      this.score = MAX_SCORE;
       var m;
       while(m = closedToNeighbors.firstMember())
         closedToNeighbors.moveMemberToList(m, availableToNeighbors);
     };
     
-    this.resetCOLOR = function()
+    //No functional purpose for these variables. Just used to communicate the state for anyone interested.
+    this.resetASTAR_STATE = function()
     {
-      this.content.COLORclosed = false;
-      this.content.COLORopened = false;
-      this.content.COLORispath = false;
+      this.content.ASTAR_STATE_closed = false;
+      this.content.ASTAR_STATE_opened = false;
+      this.content.ASTAR_STATE_ispath = false;
+      this.content.ASTAR_STATE_h_ness = MAX_SCORE;
+      this.content.ASTAR_STATE_g_ness = MAX_SCORE;
     }
     this.reset();
   };
@@ -137,9 +143,9 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
     nodes.performMemberFunction("reset", null);
   };
   
-  this.resetNodesCOLOR = function()
+  this.resetNodesASTAR_STATE = function()
   {
-    nodes.performMemberFunction("resetCOLOR", null);
+    nodes.performMemberFunction("resetASTAR_STATE", null);
   };
   
   this.calculateHs = function(goalNode)
@@ -149,12 +155,13 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
     while(n = i.next())
     {
       n.h = this.calculateH(n.content, goalNode.content);
+      n.content.ASTAR_STATE_h_ness = n.h;
     }
   };
 
   this.getBestPath = function(startContent, endContent)
   {
-    this.resetNodesCOLOR();
+    this.resetNodesASTAR_STATE();
     var startNode = startContent.ASNodeMap[self.identifier];
     var endNode = endContent.ASNodeMap[self.identifier];
     startNode.isStart = true;
@@ -164,20 +171,17 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
   
     var closeNode = function(node)
     {
-      node.content.COLORclosed = true;
       if(node.isEnd)
         return node.getPath(bestPath);
-      else
-      {
-        node.informNeighborsOfClosing();
-        node.closed = true;
-        node.tryToAddNeighborsToPath(openNodes);
-        return null;
-      }
+        
+      node.informNeighborsOfClosing();
+      node.content.ASTAR_STATE_closed = true;
+      node.tryToAddNeighborsToPathAndOpenThem(openNodes);
+      return null;
     };
 
     var openNodes = new BinaryTree(self.identifier+"_OPEN_NODES");
-    startNode.score = 0;
+    startNode.g = 0;
     openNodes.add(startNode);
   
     var n;
