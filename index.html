@@ -221,8 +221,8 @@ function draw()
           else if(nodes[i][j] == you){ r = 0;   g = 255; b = 0;   }
           else if(nodes[i][j].block) { r = 255; g = 255; b = 255; }
           else if(nodes[i][j].ASTAR_STATE_ispath) b = 255;
-          else if(nodes[i][j].ASTAR_STATE_closed) { r = Math.floor(255*(nodes[i][j].ASTAR_STATE_g_ness/(n*(1+hStyle*9)))); g = 200; }
-          else if(nodes[i][j].ASTAR_STATE_opened) { r = 100; b = 200; }
+          else if(nodes[i][j].ASTAR_STATE_closed) { r = Math.floor(255*(nodes[i][j].ASTAR_STATE_g_ness/(n*(1+hStyle*19)))); g = 200; }
+          else if(nodes[i][j].ASTAR_STATE_opened) { r = 100; b = Math.floor(255*(nodes[i][j].ASTAR_STATE_g_ness/(n*(1+hStyle*19)))); }
           c.context.fillStyle = "rgba("+r+","+g+","+b+",1)";
           c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
         }
