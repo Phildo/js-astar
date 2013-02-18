@@ -165,6 +165,7 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
     var startNode = startContent.ASNodeMap[self.identifier];
     var endNode = endContent.ASNodeMap[self.identifier];
     startNode.isStart = true;
+    startNode.g = 0;
     endNode.isEnd = true;
     this.calculateHs(endNode);
     var bestPath = [];
