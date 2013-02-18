@@ -228,10 +228,10 @@ function tick()
   }
   shouldAlterHeight = false;
   while(you == end) setRandomEnd();
-  step = map.getBestStep(you,end);
+  if(shouldTick) step = map.getBestStep(you,end);
   draw();
   if(step) you = step;
-  if(shouldTick) setTimeout(tick, ticktime);
+  setTimeout(tick, ticktime);
 };
 
 function draw()
@@ -433,8 +433,8 @@ window.addEventListener('load',doit,false);
   </div>
   <div>
    spacebar = stop/start; <br />
-   click and drag = draw walls (cannot draw while stopped); <br />
-   shift + click and drag = remove walls (cannot remove while stopped); <br />
+   click and drag = draw walls; <br />
+   shift + click and drag = remove walls; <br />
    (c)lear = clear walls; <br />
    (b)rush = toggle brush size; <br />
    (h)eight = toggle height map; <br />
