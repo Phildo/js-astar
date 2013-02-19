@@ -99,7 +99,7 @@ var BinaryTree = function(identifier)
   {
     delete node.content.BNodeMap[self.identifier];
 
-    if(node.numChildren == 2)
+    if(node.numChildren() == 2)
     {
       var newNodeToDelete = findGreatestChildNode(node.left);
       moveContentToNode(newNodeToDelete, node);

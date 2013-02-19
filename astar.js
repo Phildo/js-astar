@@ -180,6 +180,7 @@ var AStarGraph = function(identifier, calculateH, calculateGFromNodeToNode)
   
     var n;
     var path = null;
+    
     while((n = openNodes.popSmallest()) && !path)
       path = closeNode(n);
       

@@ -28,38 +28,6 @@ var vStyle = 0; var vStyleCount = 1;
 var shouldAlterHeight = false;
 var hStyle = 0; var hStyleCount = 2;
 
-var setbug = function()
-{
-  you = nodes[28][8];
-  end = nodes[29][7];
-
-  for(var i = 0; i < n; i++)
-  {
-    for(var j = 0; j < n; j++)
-    {
-      nodes[i][j].height = 0;
-      blockNode(i,j);
-    }
-  }
-
-  for(var i = 27; i < 30; i++)
-    for(var j = 6; j < 9; j++)
-      unblockNode(i,j);
-
-  blockNode(27,6);
-  blockNode(29,8);
-  blockNode(29,6);
-
-  nodes[27][7].height = 68;
-  nodes[27][8].height = 40;
-  nodes[28][6].height = 18;
-  nodes[28][7].height = 41;
-  nodes[28][8].height = 0;
-  nodes[29][7].height = 100;
-
-  ticktime = 1;
-}
-
 function doit()
 {
   document.getElementById("canvas_container").appendChild(c.canvas);
