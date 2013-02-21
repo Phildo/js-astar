@@ -41,7 +41,15 @@ function doit()
 
 var constructGrid = function(size)
 {
+  //Manhattan distance (cheap + good approximation)
   var calculateH = function(node, goalNode) { return Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y); };
+
+  //Euclidean distance (slightly more expensive, slightly WORSE approximation [dude can't go diagonally], but more "human" looking)
+  //var calculateH = function(node, goalNode) { return Math.floor(Math.sqrt((Math.abs(goalNode.x-node.x)*Math.abs(goalNode.x-node.x))+(Math.abs(goalNode.y-node.y)*Math.abs(goalNode.y-node.y)))); };
+
+  //None (aka pretty much Djikstras algo)
+  //var calculateH = function(node, goalNode) { return 0; };
+
   var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1+nodeB.height; };
   map = new AStarGraph("Test", calculateH, calculateGFromNodeToNode);
   
