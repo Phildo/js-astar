@@ -26,7 +26,6 @@ var shiftDown = false;
 var shouldAddSize = false;
 var shouldTick = true;
 var shouldClear = false;
-var vStyle = 0; var vStyleCount = 1;
 var shouldAlterHeight = false;
 var hStyle = 0; var hStyleCount = 2;
 
@@ -209,29 +208,22 @@ function tick()
 
 function draw()
 {
-  switch(vStyle)
+  for(var i = 0; i < n; i++)
   {
-    case 0: //draw openness
-      for(var i = 0; i < n; i++)
-      {
-        for(var j = 0; j < n; j++)
-        {
-          var darkness = nodes[i][j].height;
-          var r = darkness; 
-          var g = darkness;
-          var b = darkness;
-          
-          //COLOR
-          if(nodes[i][j] == you)     { r = 255; g = 0;   b = 0;   }
-          else if(nodes[i][j] == end){ r = 0;   g = 255; b = 0;   }
-          else if(nodes[i][j].block) { r = 255; g = 255; b = 255; }
-          c.context.fillStyle = "rgba("+r+","+g+","+b+",1)";
-          c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
-        }
-      }
-      break;
-    case 1: //draw g-ness
-      break;
+    for(var j = 0; j < n; j++)
+    {
+      var darkness = nodes[i][j].height;
+      var r = darkness; 
+      var g = darkness;
+      var b = darkness;
+      
+      //COLOR
+      if(nodes[i][j] == you)     { r = 255; g = 0;   b = 0;   }
+      else if(nodes[i][j] == end){ r = 0;   g = 255; b = 0;   }
+      else if(nodes[i][j].block) { r = 255; g = 255; b = 255; }
+      c.context.fillStyle = "rgba("+r+","+g+","+b+",1)";
+      c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
+    }
   }
 };
 
