@@ -58,8 +58,11 @@ var AStarTraverser = function(graph, calculateHFromNodeToNode, calculateGFromNod
   };
   ASTNode.prototype.graphIsDisconnectingTo = function(gnode)
   {
-    this.availableToNeighbors.remove(gnode.ASTNodeMap[this.parentTraverser.identifier]);
-    this.parentTraverser.invalidatePath();
+    if(this.availableToNeighbors.hasMember(gnode.ASTNodeMap[this.parentTraverser.identifier]))
+    {
+      this.availableToNeighbors.remove(gnode.ASTNodeMap[this.parentTraverser.identifier]);
+      this.parentTraverser.invalidatePath();
+    }
   };
   ASTNode.prototype.connectToGraphNode = function(gnode)
   { 
