@@ -3,13 +3,15 @@
 <script type='text/javascript' src='linkedlist.js'></script>
 <script type='text/javascript' src='binarytree.js'></script>
 <script type='text/javascript' src='canv.js'></script>
-<script type='text/javascript' src='astar.js'></script>
+<script type='text/javascript' src='graph.js'></script>
+<script type='text/javascript' src='traverser.js'></script>
 <script type='text/javascript'>
 var c = new Canv(500,500);
 c.canvas.style.border = "1px solid black";
 
 var map;
-var n = 30;//map size
+var traverser;
+var n = 10;//map size
 var ticktime = 100;
 var brushsize = 1;
 
@@ -41,17 +43,7 @@ function doit()
 
 var constructGrid = function(size)
 {
-  //Manhattan distance (cheap + good approximation)
-  var calculateH = function(node, goalNode) { return Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y); };
-
-  //Euclidean distance (slightly more expensive, slightly WORSE approximation [dude can't go diagonally], but more "human" looking)
-  //var calculateH = function(node, goalNode) { return Math.floor(Math.sqrt((Math.abs(goalNode.x-node.x)*Math.abs(goalNode.x-node.x))+(Math.abs(goalNode.y-node.y)*Math.abs(goalNode.y-node.y)))); };
-
-  //None (aka pretty much Djikstras algo)
-  //var calculateH = function(node, goalNode) { return 0; };
-
-  var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1+nodeB.height; };
-  map = new AStarGraph("Test", calculateH, calculateGFromNodeToNode);
+  map = new Graph("Test");
   
   var pos = [];
   var tmpNode;
@@ -79,7 +71,11 @@ var constructGrid = function(size)
         map.connectNodeToNode(pos[i][j],pos[i][j+1]);
     }
   }
-  map.resetNodes();
+
+  var calculateHFromNodeToNode = function(node, goalNode) { return Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y); };
+  var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1+nodeB.height; };
+  traverser = new AStarTraverser(map, calculateHFromNodeToNode, calculateGFromNodeToNode, "TestTraverser");
+  traverser.invalidatePath();
   return pos;
 };
 
@@ -162,7 +158,7 @@ var addToGrid = function(deltaN)
     }
   }
   n += deltaN;
-  map.resetNodes();
+  traverser.invalidatePath();
 };
 
 function tick()
@@ -180,6 +176,7 @@ function tick()
   shouldClear = false;
   if(shouldAlterHeight)
   {
+    traverser.invalidatePath();
     switch(hStyle)
     {
       case 0: //no height
@@ -204,9 +201,9 @@ function tick()
   }
   shouldAlterHeight = false;
   while(you == end) setRandomEnd();
-  step = map.getBestStep(you,end);
-  draw();
+  step = traverser.getBestNextStep(you,end);
   if(shouldTick && step) you = step;
+  draw();
   setTimeout(tick, ticktime);
 };
 
@@ -225,13 +222,9 @@ function draw()
           var b = darkness;
           
           //COLOR
-          if(nodes[i][j] == end)     { r = 255; g = 0;   b = 0;   }
-          else if(nodes[i][j] == you){ r = 0;   g = 255; b = 0;   }
+          if(nodes[i][j] == you)     { r = 255; g = 0;   b = 0;   }
+          else if(nodes[i][j] == end){ r = 0;   g = 255; b = 0;   }
           else if(nodes[i][j].block) { r = 255; g = 255; b = 255; }
-          else if(nodes[i][j].ASTAR_STATE_ispath) b = 255;
-          //else if(nodes[i][j].ASTAR_STATE_closed) { r = Math.floor(255*(nodes[i][j].ASTAR_STATE_g_ness/(n*(1+hStyle*19)))); g = 200; }
-          else if(nodes[i][j].ASTAR_STATE_closed) { r = Math.floor(1000*nodes[i][j].ASTAR_STATE_g_ness/(n*(1+hStyle*19)))%255; g = 200; }
-          else if(nodes[i][j].ASTAR_STATE_opened) { r = 100; b = Math.floor(255*(nodes[i][j].ASTAR_STATE_g_ness/(n*(1+hStyle*19)))); }
           c.context.fillStyle = "rgba("+r+","+g+","+b+",1)";
           c.context.fillRect((i/n)*c.canvas.width,(j/n)*c.canvas.height,(1/n)*c.canvas.width,(1/n)*c.canvas.height);
         }
