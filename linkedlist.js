@@ -20,10 +20,10 @@ var LinkedList = function(identifier)
     }
   };
 
-  this.head = new LLNode(null);
-  this.tail = new LLNode(null);
-  this.head.next = this.tail;
-  this.tail.prev = this.head;
+  self.head = new LLNode(null);
+  self.tail = new LLNode(null);
+  self.head.next = self.tail;
+  self.tail.prev = self.head;
 
   //SHOULDN'T BE CALLED FROM ANYWHERE BUT WITHIN A LIST!! (only public so other lists can call it... )
   self.insertNodeAfter = function(node, prevNode)
@@ -34,9 +34,7 @@ var LinkedList = function(identifier)
     node.next.prev = node;
 
     if(node.content !== null)
-    {
       node.content.LLNodeMap[self.identifier] = node;
-    }
 
     return node;
   };
@@ -50,9 +48,7 @@ var LinkedList = function(identifier)
     node.prev = null;
 
     if(node.content !== null)
-    {
       delete node.content.LLNodeMap[self.identifier];
-    }
 
     return node;
   };
@@ -64,7 +60,7 @@ var LinkedList = function(identifier)
 
   self.remove = function(content)
   {
-    self.removeNode(content.LLNodeMap[self.identifier]);
+    return self.removeNode(content.LLNodeMap[self.identifier]).content;
   };
 
   self.moveMemberToList = function(content, list)
@@ -162,11 +158,9 @@ var PrioritizedLinkedList = function(identifier, priorities)
     this.priorities[priority].moveMemberToList(content, list);
   };
 
-  self.moveMemberToPrioritizedList = function(content, priority, list, priority)
+  self.moveMemberToPrioritizedList = function(content, oldpriority, list, newpriority)
   {
-    this.priorities[priority].remove(content);
-    list.add(content, priority);
-    //That's the fastest way I can think to do this one, unfortunately... :(
+    this.priorities[oldpriority].moveMemberToList(content, list.priorities[newpriority]);
   };
 
   self.performMemberFunction = function(func, args)
@@ -287,6 +281,12 @@ var RecycleLinkedList = function(identifier, generateFunc, refreshFunc)
     var m;
     while(m = self.firstMember())
       self.retire(m);
+  };
+
+  self.clean = function()
+  {
+    active.empty();
+    inactive.empty();
   };
 
   self.getIterator = function()
