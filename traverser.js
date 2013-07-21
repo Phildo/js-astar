@@ -58,6 +58,7 @@ var AStarTraverser = function(graph, calculateHFromNodeToNode, calculateGFromNod
   };
   ASTNode.prototype.graphIsDisconnectingTo = function(gnode)
   {
+    this.parentTraverser.makeASTNodeFromGraphNodeIfNeeded(gnode);
     if(this.availableToNeighbors.hasMember(gnode.ASTNodeMap[this.parentTraverser.identifier]))
     {
       this.availableToNeighbors.remove(gnode.ASTNodeMap[this.parentTraverser.identifier]);
@@ -120,7 +121,6 @@ var AStarTraverser = function(graph, calculateHFromNodeToNode, calculateGFromNod
 
   this.getBestPath = function(startContent, endContent)
   {
-    console.log('gbp');
     var startNode = startContent.GNodeMap[this.graph.identifier].ASTNodeMap[this.identifier];
     startNode.connectToGraphNodeNeighbors();
     startNode.isStart = true;

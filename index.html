@@ -27,6 +27,7 @@ var shouldAddSize = false;
 var shouldTick = true;
 var shouldClear = false;
 var shouldAlterHeight = false;
+var slow = true;
 var hStyle = 0; var hStyleCount = 2;
 
 function doit()
@@ -200,10 +201,13 @@ function tick()
   }
   shouldAlterHeight = false;
   while(you == end) setRandomEnd();
-  step = traverser.getBestNextStep(you,end);
+  if(shouldTick) step = traverser.getBestNextStep(you,end);
   if(shouldTick && step) you = step;
   draw();
-  setTimeout(tick, ticktime);
+  if(slow)
+    setTimeout(tick, ticktime);
+  else
+    setTimeout(tick, 1);
 };
 
 function draw()
@@ -373,6 +377,9 @@ function downKey(e)
     case 67: //c
       shouldClear = true;
       break;
+    case 83: //s
+      slow = !slow;
+      break;
   };
 };
 
@@ -400,6 +407,9 @@ window.addEventListener('load',doit,false);
    (b)rush = toggle brush size; <br />
    (h)eight = toggle height map; <br />
    (i)ncrement = make map bigger (warning for slow cpu's); <br />
+   (s)peed = toggle the traversal speed (slow to see path, fast to see how quickly path can be calculated)<br />
+   <br />
+   NOTE- This algorithm is NOT ideal for grid shaped graphs. For that, look into JPS (Jump Point Search). I am simply using a grid to show arbitrarily large/complex graphs.
   </div>
 </body>
 </html>
