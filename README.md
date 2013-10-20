@@ -20,7 +20,7 @@ js-astar works for arbitrary graphs, and you can structure your node objects how
 
 First, create a graph object:
 
-    var g = new Graph("IDENTIFIER");
+    var graph = new Graph("IDENTIFIER");
 
 The graph constructor is passed a string identifier. You are responsible for keeping this unique among graphs. The purpose of this is to allow for re-use of nodes in multiple graphs without conflict. (If you only have 1 graph, the string is arbitrary.)
 
@@ -34,21 +34,21 @@ Next, you need to create your node objects. You are in complete control over the
 Once you have your node objects, you need to add them to the graph
 
     for(var i = 0; i < nodes.length; i++)
-      g.add(nodes[i]);
+      graph.add(nodes[i]);
 
 Now, you must tell the graph which nodes are connected
 
-    g.connectNodeToNode(nodes[0],nodes[1]);
-    g.connectNodeToNode(nodes[1],nodes[2]);
-    g.connectNodeToNode(nodes[1],nodes[3]);
-    g.connectNodeToNode(nodes[1],nodes[4]);
-    g.connectNodeToNode(nodes[4],nodes[5]);
-    g.connectNodeToNode(nodes[5],nodes[0]);
-    g.connectNodeToNode(nodes[5],nodes[6]);
-    g.connectNodeToNode(nodes[5],nodes[7]);
-    g.connectNodeToNode(nodes[5],nodes[8]);
-    g.connectNodeToNode(nodes[7],nodes[8]);
-    g.connectNodeToNode(nodes[8],nodes[9]);
+    graph.connectNodeToNode(nodes[0],nodes[1]);
+    graph.connectNodeToNode(nodes[1],nodes[2]);
+    graph.connectNodeToNode(nodes[1],nodes[3]);
+    graph.connectNodeToNode(nodes[1],nodes[4]);
+    graph.connectNodeToNode(nodes[4],nodes[5]);
+    graph.connectNodeToNode(nodes[5],nodes[0]);
+    graph.connectNodeToNode(nodes[5],nodes[6]);
+    graph.connectNodeToNode(nodes[5],nodes[7]);
+    graph.connectNodeToNode(nodes[5],nodes[8]);
+    graph.connectNodeToNode(nodes[7],nodes[8]);
+    graph.connectNodeToNode(nodes[8],nodes[9]);
 
 *You may notice that a bit of information that is missing is the cost of the edges- this is intentionally left out until the next step to allow for traversals that don't use edge cost in the traditional way.
 
@@ -95,7 +95,7 @@ You will use the traverser to query for the optimal path, one step at a time.
 
 Create the traverser by passing in all the objects we just set up. Here you will also give it a unique string to allow for multipile simultaneous traversals of the same graph not interfering.
 
-    var traverser = new AStarTraverser(map, calculateHFromNodeToNode, calculateGFromNodeToNode, "TestTraverser");
+    var traverser = new AStarTraverser(graph, calculateHFromNodeToNode, calculateGFromNodeToNode, "TRAVERSAL_IDENTIFIER");
 
 To query for a path, pass in the start and the goal node, and you will be returned the optimal next step (as a node). 
 
