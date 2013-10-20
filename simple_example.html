@@ -1,0 +1,98 @@
+<html>
+<head>
+<script type='text/javascript' src='linkedlist.js'></script>
+<script type='text/javascript' src='binarytree.js'></script>
+<script type='text/javascript' src='graph.js'></script>
+<script type='text/javascript' src='traverser.js'></script>
+<script type='text/javascript'>
+
+var map; //the underlying graph
+var traverser; //used to query for next steps
+var nodes; //essentially a hash to access individual squares in grid (can't access them easily through map, because map supports arbitrary graphs)
+
+//Runs when page loads
+function doit()
+{
+  var n = 10;
+  nodes = constructGrid(n); //construct the grid
+  var path = calculatePath(nodes[0][0],nodes[n-1][n-1]); //find optimal path from start to end
+  console.log(path);
+  printPath(path); //print the path
+};
+
+//This simply loads the graph structure into the map graph
+//Note- Graph, and thus AStarTraverser, functions for arbitrary graphs;
+//This simply loads a grid shaped one, for easy construction/example purposes.
+var constructGrid = function(size)
+{
+  map = new Graph("Test");
+
+  var pos = [];//the array-accessible list of nodes
+  var tmpNode;
+
+  //These loops literally create a sizexsize grid, and loads it into map and pos
+  for(var i = 0; i < size; i++)
+  {
+    pos[i] = [];
+    for(var j = 0; j < size; j++)
+    {
+      tmpNode = {"x":i,"y":j};  //create node
+      map.add(tmpNode,i+"_"+j); //add it to graph
+      pos[i][j] = tmpNode;      //add it to array
+    }
+  }
+
+  //So now we have a grid of nodes, but none of them are connected- 
+  //iterate through them to tell the map(graph) which nodes are connected (the nodes directly adjacent to others)
+  for(var i = 0; i < size; i++)
+  {
+    for(var j = 0; j < size; j++)
+    {
+      if(i-1 >= 0)   map.connectNodeToNode(pos[i][j],pos[i-1][j]);
+      if(i+1 < size) map.connectNodeToNode(pos[i][j],pos[i+1][j]);
+      if(j-1 >= 0)   map.connectNodeToNode(pos[i][j],pos[i][j-1]);
+      if(j+1 < size) map.connectNodeToNode(pos[i][j],pos[i][j+1]);
+    }
+  }
+
+  //Define the "calculate H" function (the heuristic used by A*- in this case, the manhattan distance)
+  var calculateHFromNodeToNode = function(node, goalNode)  { return Math.abs(goalNode.x-node.x)+Math.abs(goalNode.y-node.y); };
+  //Define the "calculate G" function (a growing tally of "cost" required to get from start to nodeA, plus the "cost" to get from nodeA to nodeB- in this case, just 1 per node)
+  var calculateGFromNodeToNode = function(nodeA, g, nodeB) { return g+1; };
+
+  //create the traverser
+  traverser = new AStarTraverser(map, calculateHFromNodeToNode, calculateGFromNodeToNode, "TestTraverser");
+  traverser.invalidatePath();
+
+  return pos;
+};
+
+//Will return an array of objects you used as nodes
+function calculatePath(start,end)
+{
+  var path = [];
+  var step = start;
+  path.push(start);
+  while(path[path.length-1] != end && (step = traverser.getBestNextStep(step,end)))
+    path.push(step);
+  return path;
+};
+
+//Just prints nodes
+function printPath(path)
+{
+  for(var i = 0; i < path.length; i++)
+    document.getElementById("path").innerHTML += "("+path[i].x+","+path[i].y+")<br />";
+}
+
+window.addEventListener('load',doit,false);
+</script>
+</head>
+<body >
+<div id="notice">
+Note- the output will be rather unimpressive. This file is intended to illustrate an example of using the API (view source)- instead see index.html to get a better idea of the power of using js-astar.
+</div>
+<div id="path">
+</div>
+</body>
+</html>
